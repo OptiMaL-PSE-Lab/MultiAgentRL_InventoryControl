@@ -1,4 +1,5 @@
 from env3run import MultiAgentInvManagementDiv
+from env2 import MultiAgentInvManagementDiv1
 import gymnasium as gym
 from ray.rllib.algorithms.ppo import PPOConfig
 from gymnasium.spaces import Dict, Box
@@ -14,14 +15,25 @@ import torch
 import matplotlib.pyplot as plt 
 import seaborn as sns
 import pandas as pd
+from mpl_toolkits.mplot3d import Axes3D
+from ray.rllib.models.modelv2 import ModelV2
+
+ModelV2
+
 
 ray.init()
 
 # Register environment
-def env_creator(config):
+def env_creator1(config):
+    return MultiAgentInvManagementDiv1(config = config)
+config = {"bullwhip": True}
+tune.register_env("MultiAgentInvManagementDiv1", env_creator1)   # noqa: E501
+
+# Register environment
+def env_creator2(config):
     return MultiAgentInvManagementDiv(config = config)
 config = {"bullwhip": True}
-tune.register_env("MultiAgentInvManagementDiv", env_creator)   # noqa: E501
+tune.register_env("MultiAgentInvManagementDiv", env_creator2)
 
 #load the trained policy marl
 #checkpoint_path = "/Users/nikikotecha/ray_results/PPO/PPO_MultiAgentInvManagementDiv_8ed7e_00000_0_2023-11-14_12-08-44/checkpoint_000070/policies/default_policy"
@@ -37,13 +49,18 @@ tune.register_env("MultiAgentInvManagementDiv", env_creator)   # noqa: E501
 checkpoint_path = "/Users/nikikotecha/ray_results/PPO/PPO_MultiAgentInvManagementDiv_4b099_00000_0_2023-11-13_15-06-59/checkpoint_000070"
 trial = "/Users/nikikotecha/ray_results/PPO/PPO_MultiAgentInvManagementDiv_60221_00000_0_2023-11-20_11-53-10/checkpoint_000070"
 newenv = "/Users/nikikotecha/ray_results/PPO/PPO_MultiAgentInvManagementDiv_711b2_00000_0_2023-11-21_17-43-12/checkpoint_000060"
-newenv_optp = "/Users/nikikotecha/ray_results/PPO/PPO_MultiAgentInvManagementDiv_82dea_00000_0_2023-11-21_19-23-55/checkpoint_000060"
+newenv_optp = "/Users/nikikotecha/ray_results/PPO/PPO_MultiAgentInvManagementDiv_82dea_00000_0_2023-11-21_19-23-55/checkpoint_000060" #marl_opt num 2 
+marl_opt = "/Users/nikikotecha/ray_results/PPO/PPO_MultiAgentInvManagementDiv_03040_00000_0_2023-11-22_17-24-37/checkpoint_000060"
 single_agent = "/Users/nikikotecha/ray_results/PPO/PPO_MultiAgentInvManagementDiv_e11c4_00000_0_2023-11-21_22-25-30/checkpoint_000060"
 trained_policy_single = Algorithm.from_checkpoint(single_agent)
-trained_policy_multi = Algorithm.from_checkpoint(newenv_optp)
+#trained_policy_multi = Algorithm.from_checkpoint(marl_opt)
+or_policy = "/Users/nikikotecha/ray_results/PPO/PPO_MultiAgentInvManagementDiv_e41a5_00000_0_2023-11-29_14-30-49/checkpoint_000060"
+OR = "/Users/nikikotecha/ray_results/PPO/PPO_MultiAgentInvManagementDiv1_658b6_00000_0_2023-11-30_13-28-50/checkpoint_000002"
+trained_policy_or = Algorithm.from_checkpoint(OR)
 #trained_policy = Policy.from_checkpoint(checkpoint_path)
+print("trained policies have been loaded for OR")
 
-algo_config= (
+"""algo_config= (
     PPOConfig()
     .environment(
         env= "MultiAgentInvManagementDiv",
@@ -65,15 +82,16 @@ algo_config= (
 )
 
 algo_config.restore(checkpoint_path)
+"""
 
 
-
-
-
-config = {"bullwhip": True}
-env = MultiAgentInvManagementDiv(config)
-num_runs = 20
-def run_simulation(num_periods_, trained_policy):
+config1 = {"bullwhip": True}
+#env = MultiAgentInvManagementDiv(config1)
+num_runs = 3
+env2 = MultiAgentInvManagementDiv1(config1)
+action_space = env2.action_space
+print("env action space", action_space)
+def run_simulation(num_periods_, trained_policy, env):
     obs, infos = env.reset()
     all_infos = []
     all_profits = []
@@ -98,8 +116,8 @@ def run_simulation(num_periods_, trained_policy):
             all_demand.append((agent_id, infos[agent_id]['demand']))
             all_inv.append((agent_id, infos[agent_id]['inv']))
             all_or.append((agent_id, infos[agent_id]['actual order']))
-            all_s1.append((agent_id, infos[agent_id]['rescales1']))
-            all_s2.append((agent_id, infos[agent_id]['rescales2']))
+            #all_s1.append((agent_id, infos[agent_id]['rescales1']))
+            #all_s2.append((agent_id, infos[agent_id]['rescales2']))
 
         _ +=1
     return all_infos, all_profits, all_backlog, all_inv, all_or, all_demand, all_s1, all_s2
@@ -107,7 +125,8 @@ def run_simulation(num_periods_, trained_policy):
 
 def average_simulation(num_runs, 
                        trained_policy, 
-                       num_periods_):
+                       num_periods_,
+                       env):
     #initialise to store variables
     av_infos = []
     av_profits = []
@@ -118,7 +137,7 @@ def average_simulation(num_runs,
     av_s1 = []
     av_s2 = []
     for run in range(num_runs):
-        all_infos, all_profits, all_backlog, all_inv, all_or, all_demand, all_s1, all_s2 = run_simulation(num_periods_, trained_policy)
+        all_infos, all_profits, all_backlog, all_inv, all_or, all_demand, all_s1, all_s2 = run_simulation(num_periods_, trained_policy, env)
         av_infos.append(all_infos)
         av_profits.append(all_profits)
         av_backlog.append(all_backlog)
@@ -129,8 +148,8 @@ def average_simulation(num_runs,
         av_s2.append(all_s2)
     return av_infos, av_profits, av_backlog, av_inv, av_or, av_demand, av_s1, av_s2
 
-av_infos, av_profits, av_backlog, av_inv , av_or , av_demand, av_s1, av_s2 = average_simulation(num_runs, trained_policy = trained_policy_single, num_periods_=50)
-mav_infos, mav_profits, mav_backlog, mav_inv , mav_or , mav_demand, mav_s1, mav_s2 = average_simulation(num_runs, trained_policy = trained_policy_multi, num_periods_=50)
+av_infos, av_profits, av_backlog, av_inv , av_or , av_demand, av_s1, av_s2 = average_simulation(num_runs, trained_policy = trained_policy_or, num_periods_=50, env = env2)
+#mav_infos, mav_profits, mav_backlog, mav_inv , mav_or , mav_demand, mav_s1, mav_s2 = average_simulation(num_runs, trained_policy = trained_policy_multi, num_periods_=50, env = env)
 
 #all nodes e.g. profit
 def process_all_nodes_data(av_profits1, av_profits2, config):
@@ -144,21 +163,20 @@ def process_all_nodes_data(av_profits1, av_profits2, config):
 
     period = range(1, len(average_profit_list1)+1)
     plt.figure()
-    plt.plot(period, cumulative_profit_list1, label = "Single Agent")
-    plt.plot(period, cumulative_profit_list2, label = "Multi Agent")
+    plt.plot(period, cumulative_profit_list1, label = "Single Agent", color = 'red', linestyle = 'dotted')
+    plt.plot(period, cumulative_profit_list2, label = "Multi Agent", color = 'blue', linestyle = 'solid')
     #plt.fill_between(period, cumulative_profit_list - std_profit_list, cumulative_profit_list + std_profit_list, color='gray', alpha=0.5)
     plt.xlabel('Period')
     plt.ylabel('Average Overall Profit')
     if config["bullwhip"] == True:
         # Add vertical lines at time periods 20 and 30
-        plt.axvline(x=20, color='blue', linestyle='--')
-        plt.axvline(x=30, color='blue', linestyle='--')
+        plt.axvline(x=20, color='green', linestyle='--', label = 'Disruption Start')
+        plt.axvline(x=30, color='green', linestyle='--', label = 'Disruption End')
     plt.legend()
     plt.show()
 
-    return average_profit_list
-
-average_profit_list = process_all_nodes_data(av_profits, mav_profits, config)
+    
+average_profit_list = process_all_nodes_data(av_profits, av_profits, config)
 
 #individual nodes e.g. backlog
 def process_ind_nodes_data(av_backlog, num_runs, config):
@@ -179,12 +197,12 @@ def process_ind_nodes_data(av_backlog, num_runs, config):
 
     return average_period_data
 
-#average_backlog_data = process_ind_nodes_data(av_backlog, num_runs, config)
-#average_demand_data = process_ind_nodes_data(av_demand, num_runs, config)
-#average_inv_data = process_ind_nodes_data(av_inv, num_runs, config)
-#average_or_data = process_ind_nodes_data(av_or, num_runs, config)
+#average_backlog_data = process_ind_nodes_data(mav_backlog, num_runs, config)
+#average_demand_data = process_ind_nodes_data(mav_demand, num_runs, config)
+#average_inv_data = process_ind_nodes_data(mav_inv, num_runs, config)
+#average_or_data = process_ind_nodes_data(mav_or, num_runs, config)
 #average_s1_data = process_ind_nodes_data(av_s1, num_runs, config)
-#average_s2_data = process_ind_nodes_data(av_s2, num_runs, config)
+#average_s2_data = process_ind_nodes_data(mav_s2, num_runs, config)
 
 def plot_data(average_backlog_data, average_demand_data, config):
 
@@ -210,7 +228,7 @@ def plot_data(average_backlog_data, average_demand_data, config):
     plt.show()
 
 #plot_data(average_backlog_data, average_demand_data, config)
-plot_data(average_s1_data, average_s2_data, config)
+#plot_data(average_s1_data, average_s2_data, config)
 
 def plot_single_data(average_backlog_data,config):
 
@@ -230,14 +248,14 @@ def plot_single_data(average_backlog_data,config):
     plt.tight_layout()
     plt.show()
 
-plot_single_data(average_backlog_data, config)
-plot_single_data(average_inv_data, config)
-plot_single_data(average_or_data, config)
-plot_single_data(average_demand_data, config)
+#plot_single_data(average_backlog_data, config)
+#plot_single_data(average_inv_data, config)
+#plot_single_data(average_or_data, config)
+#plot_single_data(average_demand_data, config)
 
 
 #heat maps e.g. order replenishment and inventory 
-def heat_maps(average_period_data1, average_period_data2, average_period_data3, average_period_data4):
+def heat_maps(average_period_data1, average_period_data2, average_period_data3):
     num_rows = 3
     num_cols = 2
     fig, axes = plt.subplots(num_rows, num_cols, figsize = (12,8))
@@ -245,18 +263,32 @@ def heat_maps(average_period_data1, average_period_data2, average_period_data3, 
     for i, (agent_id, data) in enumerate(average_period_data1.items()):
         row = i // num_cols
         col = i % num_cols
-        ax = axes[row, col]
+        ax = fig.add_subplot(num_rows, num_cols)
         #period = range(1, len(data)+1)
-        df_inv = pd.DataFrame(average_period_data1[agent_id])
-        df_or = pd.DataFrame(average_period_data2[agent_id])
-        df_backlog = pd.DataFrame(average_period_data3[agent_id])
-        df_demand = pd.DataFrame(average_period_data4[agent_id])
+        df_1 = pd.DataFrame(average_period_data1[agent_id])
+        df_2 = pd.DataFrame(average_period_data2[agent_id])
+        df_3 = pd.DataFrame(average_period_data3[agent_id])
 
-        combined_df = pd.concat([df_inv, df_or, df_backlog, df_demand], axis = 1)
+        combined_df = pd.concat([df_1, df_2, df_3], axis = 1)
         correlation_matrix = combined_df.corr()
 
-        #correlation_matrix = df_inv.corrwith(df_or)
         plt.figure(figsize = (8,6))
+        sns.heatmap(correlation_matrix, annot=True, cmap = 'coolwarm', vmin = -1, vmax = 1, ax= ax)
+        ax.set_xticklabels(["Inv", "S1", "S2"], rotation = 0)
+        ax.set_yticklabels(["Inv", "S1", "S2"], rotation = 0)
+        ax.set_title(f'Agent ID: {agent_id}', pad = 10)
+
+    fig.tight_layout()
+    plt.subplots_adjust(top = 0.9)
+    plt.show()
+
+    plt.tight_layout()
+    plt.show()
+
+#heat_maps(average_inv_data, average_s1_data,average_demand_data)
+
+       
+"""plt.figure(figsize = (8,6))
         sns.heatmap(correlation_matrix, annot=True, cmap = 'coolwarm', vmin = -1, vmax = 1, ax= ax)
         ax.set_xticklabels(["Inv", "S1", "S2", "Demand"], rotation = 0)
         ax.set_yticklabels(["Inv", "S1", "S2", "Demand"], rotation = 0)
@@ -264,9 +296,10 @@ def heat_maps(average_period_data1, average_period_data2, average_period_data3, 
 
     fig.tight_layout()
     plt.subplots_adjust(top = 0.9)
-    plt.show()
+    plt.show()"""
 
-#heat_maps(average_inv_data, average_s1_data, average_s2_data, average_demand_data)
+#heat_maps(average_inv_data, average_s1_data,average_demand_data)
+
 
 """def process_data(b):
     data_dict = {

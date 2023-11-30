@@ -1,0 +1,13 @@
+#!/bin/bash
+#PBS -l select=1:ncpus=8:mem=64gb
+#PBS -l walltime=00:04:00
+
+cd $PBS_O_WORKDIR
+
+echo $pwd
+module load anaconda3/personal
+source activate
+conda info --envs
+source activate escape
+
+python run.py

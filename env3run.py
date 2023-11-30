@@ -57,6 +57,10 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
         self.bullwhip = config.get("bullwhip", False)
         # Number of Periods in Episode
         self.num_periods = config.get("num_periods", 50)
+        #coeff 
+        self.np = config.get("np", 2)
+        self.nc = config.get("nc", 0.5)
+        self.bc = config.get("bs", 2.5)
 
         # Structure
         self.num_products = config.get("num_products",2)
@@ -112,8 +116,8 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
             for product in range(self.num_products):
                 stage = get_stage(i, self.network)
                 self.node_price[i][product] = 2 * stage_price[stage] #this was x2 during training 
-                self.node_cost[i][product] = 0.5 * stage_cost[stage]
-
+                self.node_cost[i][product] = 0.5 * stage_cost[stage] #this was x0.5 during training
+            
         #self.price = config.get("price", np.flip(np.arange((self.num_stages + 1, self.num_products)) + 1))
 
         # Stock Holding and Backlog cost
@@ -752,8 +756,8 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
             infos[node_name] = meta_info
 
 #need to comment when bullwhip simulation 
-        if self.bullwhip:
-            infos['overall_profit'] = total_profit
+        #if self.bullwhip:
+        infos['overall_profit'] = total_profit
 
         """        for i in range(m):
                     for n in range(p):
@@ -787,6 +791,8 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
             for product in range(p):
                 index = node * p + product
                 agent = self.node_names[index]
+                #if 20 <= t <= 30:
+                #    self.node_price[node, product] = 1.03 * self.node_price[node, product]
 
                 reward = self.node_price[node, product] * self.ship[t, node, product] \
                     - self.node_cost[node, product] * self.order_r[t, node, product] \

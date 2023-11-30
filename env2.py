@@ -50,7 +50,7 @@ def get_retailers(network):
 
     return retailers
 
-class MultiAgentInvManagementDiv(MultiAgentEnv):
+class MultiAgentInvManagementDiv1(MultiAgentEnv):
     def __init__(self, config, **kwargs):
 
         self.config = config.copy()
@@ -86,6 +86,7 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
         self.num_stages = get_stage(node=int(self.num_nodes - 1), network=self.network) + 1 
         self.a = config.get("a", -1)
         self.b = config.get("b", 1)
+        self.demand_dist = config.get("demand_dist", "poisson")
 
         self.num_agents = config.get("num_agents", self.num_nodes * self.num_products)
         self.inv_init = config.get("init_inv", np.ones((self.num_nodes, self.num_products))*100)
@@ -112,14 +113,14 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
         for i in range(self.num_nodes):
             for product in range(self.num_products):
                 stage = get_stage(i, self.network)
-                self.node_price[i][product] = stage_price[stage]
-                self.node_cost[i][product] = stage_cost[stage]
+                self.node_price[i][product] = 2 * stage_price[stage]
+                self.node_cost[i][product] = 0.5 * stage_cost[stage]
 
         #self.price = config.get("price", np.flip(np.arange((self.num_stages + 1, self.num_products)) + 1))
 
         # Stock Holding and Backlog cost
-        self.stock_cost = config.get("stock_cost", np.ones((self.num_nodes, self.num_products))*0.5)
-        self.backlog_cost = config.get("backlog_cost", np.ones((self.num_nodes, self.num_products)))
+        self.stock_cost = config.get("stock_cost", np.ones((self.num_nodes, self.num_products)))
+        self.backlog_cost = config.get("backlog_cost", np.ones((self.num_nodes, self.num_products)) * 2.5)
 
         # Customer demand
 
@@ -250,18 +251,58 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
         todo: need to define the demand as seasonal !!!!
         '''
 
-        num_cycles = 2  # You can adjust this value to control the number of cycles per year
-        seasonal_pattern = 100 + 50 * np.sin(2 * np.pi * np.arange(periods) / (periods / num_cycles))
-        bullwhip_time_introduction = 15
-        bullwhip_duration = 5
-        demand_factor = 0
+        if customer_demand is not None:
+            self.customer_demand = customer_demand
+        else:
+            if self.demand_dist == "custom":
+                self.customer_demand = self.config.get("customer_demand", \
+                            np.ones((len(self.retailers), self.num_periods, self.num_products), \
+                            dtype=np.int16) * 5)
+            # Poisson distribution
+            elif self.demand_dist == "poisson":
+                self.mu = self.config.get("mu", 5)
+                self.dist = "poisson"
+                self.dist_param = {'mu': self.mu}
+                self.customer_demand = np.ones((len(self.retailers), self.num_periods, self.num_products), \
+                            dtype=np.int16)
+                for product in range(self.num_products):
+                    demand_pattern = np.random.poisson(self.mu, size=(len(self.retailers), self.num_periods))
+                    self.customer_demand[:,:, product] = demand_pattern * 6
+            # Uniform distribution
+            elif self.demand_dist == "uniform":
+                lower_upper = self.config.get("lower_upper", (1, 5))
+                lower = lower_upper[0]
+                upper = lower_upper[1]
+                self.dist = randint
+                self.dist_param = {'low': lower, 'high': upper}
+                self.customer_demand = np.ones((len(self.retailers), self.num_periods, self.num_products), \
+                            dtype=np.int16)
+                if lower >= upper:
+                    raise Exception('Lower bound cannot be larger than upper bound')
+                for product in range(self.num_products):
+                    self.customer_demand[:,:, product] = self.dist.rvs(size=(len(self.retailers), \
+                                                    self.num_periods, self.num_products), **self.dist_param)
+            elif self.demand_dist == "seasonal":
+                num_cycles = 2  # You can adjust this value to control the number of cycles per year
+                seasonal_pattern = 100 + 50 * np.sin(2 * np.pi * np.arange(periods) / (periods / num_cycles))
+                #seasonal_pattern = 5
 
-        self.customer_demand = np.ones((len(self.retailers), self.num_periods, num_products), dtype = np.int16)  # noqa: E501
-        
-        for product in range(num_products):
-            demand_pattern = np.random.poisson(seasonal_pattern, size=(len(self.retailers), self.num_periods))
-            self.customer_demand[:,:, product] = demand_pattern
-            print("customer demand seasonal", self.customer_demand)
+                self.customer_demand = np.ones((len(self.retailers), self.num_periods, num_products), dtype = np.int16)  # noqa: E501
+                for product in range(num_products):
+                    demand_pattern = np.random.poisson(seasonal_pattern, size=(len(self.retailers), self.num_periods))
+                    self.customer_demand[:,:, product] = demand_pattern
+            else:
+                raise Exception('Unrecognised, Distribution Not Implemented')
+            
+        bullwhip_time_introduction = 20
+        bullwhip_duration = 10
+        demand_factor = 5
+
+        if self.bullwhip == True:
+            if bullwhip_time_introduction < self.num_periods:
+                end_bullwhip_time = min(bullwhip_time_introduction + bullwhip_duration, self.num_periods)
+                self.customer_demand[:, bullwhip_time_introduction:end_bullwhip_time, :] *= demand_factor
+    
 
         if self.bullwhip and bullwhip_time_introduction < self.num_periods:
             end_bullwhip_time = min(bullwhip_time_introduction + bullwhip_duration, self.num_periods)
@@ -676,13 +717,15 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
         
         infos = {}
         
+        print("period {}, rewards {}".format(self.period, self.rewards))
         #infos['__all__'] = {}  
         for i in range(m * p):
             node = i // p
             product = i % p 
             meta_info = dict()
+            node_name = self.node_names[i]
             meta_info['period'] = self.period
-            meta_info['reward'] = self.rewards
+            meta_info['reward'] = self.rewards[node_name]
             meta_info['demand'] = self.demand[t, node, product] 
             meta_info['ship'] = self.ship[t, node, product]
             meta_info['acquisition'] = self.acquisition[t, node, product]
@@ -690,12 +733,11 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
             meta_info['profit'] = profit[node][product]
             meta_info['backlog'] = self.backlog[t, node, product]
             meta_info['inv'] = self.inv[t, node, product]
+            
+            infos[node_name] = meta_info
 
-            node = self.node_names[i]
-            infos[node] = meta_info
-
-        #need to add on when simulating the bullwhip effect 
-        #infos['overall_profit'] = total_profit
+        if self.bullwhip == True:
+            infos['overall_profit'] = total_profit
 
         for key,value in rewards.items():
             if isinstance(value, np.ndarray):
@@ -707,39 +749,30 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
     
     def get_rewards(self):
         rewards = {}
-        profit = np.zeros((self.num_nodes, self.num_products))
         m = self.num_nodes
         p = self.num_products
         t = self.period
         reward_sum = np.zeros((m,p))
-        total_profit = 0
-        for i in range(m * p):
-            node = i // p
-            product = i % p 
-            agent = self.node_names[i]
+        profit = np.zeros((m,p))
+        total_profit = 0 
+        for node in range(m):
+            for product in range(p):
+                index = node * p + product
+                agent = self.node_names[index]
 
-            reward = self.node_price[node, product] * self.ship[t, node, product] \
-                - self.node_cost[node, product] * self.order_r[t, node, product] \
-                - self.stock_cost[node, product] * np.abs(self.inv[t + 1, node, product] - self.inv_target[node, product]) \
-                - self.backlog_cost[node, product] * self.backlog[t + 1, node, product]
-            reward_sum[node][product] += reward
-            profit[node][product] = reward_sum[node][product]
-            #rewards[agent] = reward
-            rewards[agent] = reward
+                reward = self.node_price[node, product] * self.ship[t, node, product] \
+                    - self.node_cost[node, product] * self.order_r[t, node, product] \
+                    - self.stock_cost[node, product] * np.abs(self.inv[t + 1, node, product] - self.inv_target[node, product]) \
+                    - self.backlog_cost[node, product] * self.backlog[t + 1, node, product]
+                print("reward sclar value",reward)
+                reward_sum[node][product] += reward
+                profit[node][product] = reward_sum[node][product]
+                rewards[agent] = reward
 
-            total_profit += profit[node][product]  # noqa: F821
-
-
-        ''' 
-            this will depend as to whether reward is indiviual or for all 
-            if self.independent:
-                    rewards[agent] = reward
-
-            if not self.independent:
-                for i in range(m):
-                    agent = self.node_names[i]
-                    rewards[agent] = reward_sum/self.num_nodes
-        '''
+                total_profit += profit[node][product]
+                print(total_profit)
+                print(rewards)
+                print(profit) 
         
         for key,value in rewards.items():
             if isinstance(value, np.ndarray):
@@ -846,7 +879,7 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
 #test
 
 config = {}
-test_env = MultiAgentInvManagementDiv(config=config)
+test_env = MultiAgentInvManagementDiv1(config=config)
 print(test_env.obs)
 for i in range(2):
     test_env.step
