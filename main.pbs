@@ -8,6 +8,6 @@ echo $pwd
 module load anaconda3/personal
 source activate
 conda info --envs
-source activate escape
+source activate heuristic
 
-python run.py
+python run or.py

@@ -1,0 +1,9 @@
+
+# conda environments:
+#
+base                  *  /rds/general/user/nk3118/home/anaconda3
+ameless                  /rds/general/user/nk3118/home/anaconda3/envs/ameless
+heuristic                /rds/general/user/nk3118/home/anaconda3/envs/heuristic
+project1                 /rds/general/user/nk3118/home/anaconda3/envs/project1
+sS                       /rds/general/user/nk3118/home/anaconda3/envs/sS
+
