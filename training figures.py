@@ -27,13 +27,12 @@ single_agent_env3 = [#"/Users/nikikotecha/ray_results/PPO/PPO_MultiAgentInvManag
 
 multi_agent_env3 = ["/Users/nikikotecha/ray_results/PPO/PPO_MultiAgentInvManagementDiv_82dea_00000_0_2023-11-21_19-23-55/result.json", #this was env3run file with optimised parameters 
                     "/Users/nikikotecha/ray_results/PPO/PPO_MultiAgentInvManagementDiv_03040_00000_0_2023-11-22_17-24-37/result.json"]
-file_paths_env2 = []
-trial = ["/Users/nikikotecha/ray_results/PPO/PPO_MultiAgentInvManagementDiv1_9ca91_00000_0_2023-11-30_15-24-54/result.json"]
-
+graph_env3 = ["/Users/nikikotecha/ray_results/PPO/PPO_MultiAgentInvManagementDiv_a0efc_00000_0_2023-12-01_11-34-46/result.json"] #this has linear structure in gnn model 
+g2 = ["/Users/nikikotecha/ray_results/PPO/PPO_MultiAgentInvManagementDiv_d8e44_00000_0_2023-12-01_15-46-52/result.json"] #gcnconv
 def training_figures(file_paths_list, iteration_to_check):
     plt.figure(figsize=(8, 6))
 
-    for file_paths , label in zip(file_paths_list, ['Single Agent', 'Multi Agent']):
+    for file_paths , label in zip(file_paths_list, ['Single Agent', 'Multi Agent', 'Graph Multi Agent', 'G2']):
         all_rewards = []
 
         for path in file_paths:
@@ -61,7 +60,7 @@ def training_figures(file_paths_list, iteration_to_check):
 
         highest_avg_reward_path = file_paths[np.argmax(avg_reward[iteration_index])]
 
-        plt.plot(range(max_iterations), avg_reward, label=path)
+        plt.plot(range(max_iterations), avg_reward, label=label)
         plt.fill_between(range(max_iterations), avg_reward - std_reward, avg_reward + std_reward, alpha=0.3, label='Standard Deviation', color='g')
 
 
@@ -75,9 +74,9 @@ def training_figures(file_paths_list, iteration_to_check):
 
 iteration_to_check = 70
 
-#file_paths_list = [single_agent_env3, multi_agent_env3]
-list_trial = [trial]
-highest_avg_reward_path = training_figures(list_trial, iteration_to_check)
+
+file_paths = [single_agent_env3, multi_agent_env3, graph_env3, g2]
+highest_avg_reward_path = training_figures(file_paths, iteration_to_check)
 def plot_mean_rewards(file_paths, label, color, linestyle):
     all_rewards = []
 
@@ -103,7 +102,7 @@ def plot_mean_rewards(file_paths, label, color, linestyle):
     iteration_to_check = min(70, max_iterations - 1)
 
     plt.plot(range(max_iterations), avg_reward, label=label, color=color, linestyle = linestyle)
-    plt.fill_between(range(max_iterations), avg_reward - std_reward, avg_reward + std_reward, alpha=0.3, label=f'Standard Deviation ({label})', color='grey')
+    #plt.fill_between(range(max_iterations), avg_reward - std_reward, avg_reward + std_reward, alpha=0.3, label=f'Standard Deviation ({label})', color='grey')
 
 iteration_to_check = 70
 

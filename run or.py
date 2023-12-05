@@ -1,5 +1,5 @@
 
-from env3run import MultiAgentInvManagementDiv
+from env2 import MultiAgentInvManagementDiv1
 import gymnasium as gym
 from gymnasium.spaces import Dict, Box
 import numpy as np 
@@ -49,7 +49,7 @@ for i in range(num_nodes * num_products):
 
 # Test environment
 config = {"connections":{0: [1], 1:[2], 2:[]}}
-test_env = MultiAgentInvManagementDiv(config)
+test_env = MultiAgentInvManagementDiv1(config)
 obs_space = test_env.observation_space
 print(obs_space)
 act_space = test_env.action_space
@@ -179,9 +179,9 @@ def central_critic_observer(agent_obs, **kw):
 
 # Register environment
 def env_creator(config):
-    return MultiAgentInvManagementDiv(config = config)
+    return MultiAgentInvManagementDiv1(config = config)
 config = {}
-tune.register_env("MultiAgentInvManagementDiv", env_creator)   # noqa: E501
+tune.register_env("MultiAgentInvManagementDiv1", env_creator)   # noqa: E501
 
 
 marl_config = {             
@@ -193,9 +193,8 @@ marl_config = {
         "policies_to_train":["0_00_0", "0_00_1", "1_01_0", "1_01_1", "2_02_0", "2_02_1"]
     },
     "max_seq_len": 10,
-    "env": "MultiAgentInvManagementDiv", 
+    "env": "MultiAgentInvManagementDiv1", 
     "env_config": {"seed": SEED},
-    "config": {"model": {"custom_model": "gnn_model"}}
     }
 
 rl_config = {             

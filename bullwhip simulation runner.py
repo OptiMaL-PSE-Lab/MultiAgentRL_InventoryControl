@@ -16,20 +16,18 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 from mpl_toolkits.mplot3d import Axes3D
-from ray.rllib.models.modelv2 import ModelV2
 
-ModelV2
 
 
 ray.init()
 
-# Register environment
+# Register environment - OR
 def env_creator1(config):
     return MultiAgentInvManagementDiv1(config = config)
 config = {"bullwhip": True}
-tune.register_env("MultiAgentInvManagementDiv1", env_creator1)   # noqa: E501
+tune.register_env("MultiAgentInvManagementDiv1", env_creator1)   
 
-# Register environment
+# Register environment - sS
 def env_creator2(config):
     return MultiAgentInvManagementDiv(config = config)
 config = {"bullwhip": True}
@@ -52,13 +50,15 @@ newenv = "/Users/nikikotecha/ray_results/PPO/PPO_MultiAgentInvManagementDiv_711b
 newenv_optp = "/Users/nikikotecha/ray_results/PPO/PPO_MultiAgentInvManagementDiv_82dea_00000_0_2023-11-21_19-23-55/checkpoint_000060" #marl_opt num 2 
 marl_opt = "/Users/nikikotecha/ray_results/PPO/PPO_MultiAgentInvManagementDiv_03040_00000_0_2023-11-22_17-24-37/checkpoint_000060"
 single_agent = "/Users/nikikotecha/ray_results/PPO/PPO_MultiAgentInvManagementDiv_e11c4_00000_0_2023-11-21_22-25-30/checkpoint_000060"
-trained_policy_single = Algorithm.from_checkpoint(single_agent)
-#trained_policy_multi = Algorithm.from_checkpoint(marl_opt)
+#trained_policy_single = Algorithm.from_checkpoint(single_agent)
+trained_policy_multi = Algorithm.from_checkpoint(marl_opt)
 or_policy = "/Users/nikikotecha/ray_results/PPO/PPO_MultiAgentInvManagementDiv_e41a5_00000_0_2023-11-29_14-30-49/checkpoint_000060"
 OR = "/Users/nikikotecha/ray_results/PPO/PPO_MultiAgentInvManagementDiv1_658b6_00000_0_2023-11-30_13-28-50/checkpoint_000002"
 trained_policy_or = Algorithm.from_checkpoint(OR)
-#trained_policy = Policy.from_checkpoint(checkpoint_path)
-print("trained policies have been loaded for OR")
+gnn = "/Users/nikikotecha/ray_results/PPO/PPO_MultiAgentInvManagementDiv_a0efc_00000_0_2023-12-01_11-34-46/checkpoint_000060"
+gnn_policy = Algorithm.from_checkpoint(gnn)
+gnn2 = "/Users/nikikotecha/ray_results/PPO/PPO_MultiAgentInvManagementDiv_d8e44_00000_0_2023-12-01_15-46-52/checkpoint_000060"
+#gnn2_policy = Algorithm.from_checkpoint(gnn2)
 
 """algo_config= (
     PPOConfig()
@@ -86,11 +86,15 @@ algo_config.restore(checkpoint_path)
 
 
 config1 = {"bullwhip": True}
-#env = MultiAgentInvManagementDiv(config1)
-num_runs = 3
-env2 = MultiAgentInvManagementDiv1(config1)
-action_space = env2.action_space
-print("env action space", action_space)
+env_OR = MultiAgentInvManagementDiv1(config1)
+action_spaceOR = env_OR.action_space
+env_SS = MultiAgentInvManagementDiv(config1)
+act_spaceSS = env_SS
+
+print("as 0r", action_spaceOR)
+print("act space ss", act_spaceSS)
+
+num_runs = 1
 def run_simulation(num_periods_, trained_policy, env):
     obs, infos = env.reset()
     all_infos = []
@@ -105,6 +109,7 @@ def run_simulation(num_periods_, trained_policy, env):
         print("num period {}".format(_))
         actions = {}
         for agent_id in obs.keys():
+            print("obs",obs[agent_id])
             action = trained_policy.compute_single_action(obs[agent_id])
             actions[agent_id] = action
         print("action dictionary", actions)
@@ -148,23 +153,28 @@ def average_simulation(num_runs,
         av_s2.append(all_s2)
     return av_infos, av_profits, av_backlog, av_inv, av_or, av_demand, av_s1, av_s2
 
-av_infos, av_profits, av_backlog, av_inv , av_or , av_demand, av_s1, av_s2 = average_simulation(num_runs, trained_policy = trained_policy_or, num_periods_=50, env = env2)
-#mav_infos, mav_profits, mav_backlog, mav_inv , mav_or , mav_demand, mav_s1, mav_s2 = average_simulation(num_runs, trained_policy = trained_policy_multi, num_periods_=50, env = env)
+av_infos, av_profits, av_backlog, av_inv , av_or , av_demand, av_s1, av_s2 = average_simulation(num_runs, trained_policy = trained_policy_or, num_periods_=50, env = env_OR)
+mav_infos, mav_profits, mav_backlog, mav_inv , mav_or , mav_demand, mav_s1, mav_s2 = average_simulation(num_runs, trained_policy = trained_policy_multi, num_periods_=50, env = env_SS)
+gav_infos, gav_profits, gav_backlog, gav_inv , gav_or , gav_demand, gav_s1, gav_s2 = average_simulation(num_runs, trained_policy = gnn_policy, num_periods_=50, env = env_SS)
 
 #all nodes e.g. profit
-def process_all_nodes_data(av_profits1, av_profits2, config):
+def process_all_nodes_data(av_profits1, av_profits2, av_profits3, config):
     average_profit_list1  = np.mean(av_profits1, axis =0)
     std_profit_list1 = np.std(av_profits1, axis=0)
     average_profit_list2 = np.mean(av_profits2, axis=0)
     std_profit_list2 = np.std(av_profits2, axis =0)
+    average_profit_list3 = np.mean(av_profits3, axis=0)
+    std_profit_list2 = np.std(av_profits2, axis =0)
 
-    cumulative_profit_list1 = np.cumsum(average_profit_list1, axis=0)  # Calculate cumulative profit
+    cumulative_profit_list1 = np.cumsum(average_profit_list1, axis =0)  # Calculate cumulative profit
     cumulative_profit_list2 = np.cumsum(average_profit_list2, axis = 0)
+    cumulative_profit_list3 = np.cumsum(average_profit_list3, axis = 0)
 
     period = range(1, len(average_profit_list1)+1)
     plt.figure()
-    plt.plot(period, cumulative_profit_list1, label = "Single Agent", color = 'red', linestyle = 'dotted')
-    plt.plot(period, cumulative_profit_list2, label = "Multi Agent", color = 'blue', linestyle = 'solid')
+    plt.plot(period, cumulative_profit_list1, label = "or Agent", color = 'red', linestyle = 'solid')
+    plt.plot(period, cumulative_profit_list2, label = "ss Multi Agent", color = 'blue', linestyle = 'solid')
+    plt.plot(period, cumulative_profit_list3, label = "Graph Multi Agent", color = 'green', linestyle = 'solid')
     #plt.fill_between(period, cumulative_profit_list - std_profit_list, cumulative_profit_list + std_profit_list, color='gray', alpha=0.5)
     plt.xlabel('Period')
     plt.ylabel('Average Overall Profit')
@@ -176,7 +186,7 @@ def process_all_nodes_data(av_profits1, av_profits2, config):
     plt.show()
 
     
-average_profit_list = process_all_nodes_data(av_profits, av_profits, config)
+average_profit_list = process_all_nodes_data(av_profits, mav_profits, gav_profits, config)
 
 #individual nodes e.g. backlog
 def process_ind_nodes_data(av_backlog, num_runs, config):

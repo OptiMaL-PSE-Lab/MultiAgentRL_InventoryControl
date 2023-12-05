@@ -448,7 +448,7 @@ class SingleAgentInvManagementDiv(gym.Env):
                     node_ids.append(node_name)
 
                     print("ACTION", action)
-                    s_value , S_value = action
+                    s_value , S_value = np.squeeze(action)
                     order_quant = max(0, S_value - s_value)
                     self.order_r[t, node, product] = \
                     self.rev_scale(order_quant, 0, self.order_max[node, product], self.a, self.b)

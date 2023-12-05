@@ -120,7 +120,7 @@ class MultiAgentInvManagementDiv1(MultiAgentEnv):
 
         # Stock Holding and Backlog cost
         self.stock_cost = config.get("stock_cost", np.ones((self.num_nodes, self.num_products)))
-        self.backlog_cost = config.get("backlog_cost", np.ones((self.num_nodes, self.num_products)) * 2.5)
+        self.backlog_cost = config.get("backlog_cost", np.ones((self.num_nodes, self.num_products)) * 2)
 
         # Customer demand
 
