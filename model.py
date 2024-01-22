@@ -5,6 +5,7 @@ from ray.rllib.models.torch.torch_modelv2 import TorchModelV2
 from ray.rllib.models.torch.fcnet import FullyConnectedNetwork
 from ray.rllib.utils.framework import try_import_torch
 from torch_geometric.nn import GCNConv
+from torch_geometric.nn.pool import global_mean_pool
 
 torch, nn = try_import_torch()
 
@@ -12,12 +13,12 @@ class GNNLayer(nn.Module):
     def __init__(self, input_dim, hidden_dim, output_dim):
         super(GNNLayer, self).__init__()
         self.conv1 = nn.Linear(input_dim, hidden_dim)
-        self.conv = GCNConv(hidden_dim, hidden_dim) 
+        #self.conv = GCNConv(hidden_dim, hidden_dim) 
         self.conv2 = nn.Linear(hidden_dim, output_dim)
 
     def forward(self, adjacency_matrix, node_features):
         x = F.relu(self.conv1(torch.matmul(adjacency_matrix, node_features)))
-        x = F.relu(self.conv(x, adjacency_matrix)) #this i have added on to allow for some aggregation
+        #x = F.relu(self.conv(x, adjacency_matrix)) #this i have added on to allow for some aggregation
         x = self.conv2(torch.matmul(adjacency_matrix, x))
         return x
 
@@ -50,11 +51,12 @@ class GNNActorCriticModel(TorchModelV2, nn.Module):
         message = self.gnn(adjacency_matrix, state_tensor)
         # Concatenate message with state for actor input
         actor_input = torch.cat([state_tensor, message], dim=1)
-        print("actor input",actor_input)
+
+        global_pool = global_mean_pool(message)
         # Actor: Select action
-        action_logits, _ = self.actor({"obs": actor_input}, state, seq_lens)
+        action_logits, _ = self.actor({"obs": state_tensor}, state, seq_lens)
         # Critic: Estimate state value
-        value = self.critic({"obs": actor_input}, state, seq_lens)
+        value = self.critic({"obs": global_pool}, state, seq_lens)
         return action_logits, [], value
 
     def value_function(self):

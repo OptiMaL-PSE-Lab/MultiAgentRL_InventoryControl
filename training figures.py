@@ -1,6 +1,7 @@
 import json 
 import matplotlib.pyplot as plt
 import numpy as np
+import os 
 '''
 todo: add checkpoint to the runn.py file so you can access the compute_action mean & sd
 will need to restore the checkpoint on here 
@@ -69,13 +70,24 @@ def training_figures(file_paths_list, iteration_to_check):
     plt.title('Training curves')
     plt.legend()
     plt.show()
+    current_directory = os.getcwd()
+    filename = 'training.png'
+    plt.savefig(filename, format='png', bbox_inches='tight', dpi=500)
+    full_path = os.path.join(current_directory, filename)
+
+    # Check if the file exists
+    if os.path.exists(full_path):
+        print(f'The file {filename} has been saved in the following directory:\n{current_directory}')
+    else:
+        print(f'The file {filename} was not found in the current working directory.')
+
 
     return highest_avg_reward_path
 
 iteration_to_check = 70
 
 
-file_paths = [single_agent_env3, multi_agent_env3, graph_env3, g2]
+file_paths = [single_agent_env3, multi_agent_env3]
 highest_avg_reward_path = training_figures(file_paths, iteration_to_check)
 def plot_mean_rewards(file_paths, label, color, linestyle):
     all_rewards = []
@@ -107,7 +119,7 @@ def plot_mean_rewards(file_paths, label, color, linestyle):
 iteration_to_check = 70
 
 plt.figure(figsize=(8, 6))
-plot_mean_rewards(list_trial, label='Single Agent', color='blue', linestyle ='dashed')
+#plot_mean_rewards(list_trial, label='Single Agent', color='blue', linestyle ='dashed')
 #plot_mean_rewards(multi_agent_env3, label='Multi Agent', color='orange', linestyle = 'solid')
 
 plt.xlabel('Iteration')

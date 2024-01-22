@@ -756,7 +756,7 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
             infos[node_name] = meta_info
 
 #need to comment when bullwhip simulation 
-        if self.bullwhip:
+        if self.bullwhip == True:
             infos['overall_profit'] = total_profit
 
         """        for i in range(m):

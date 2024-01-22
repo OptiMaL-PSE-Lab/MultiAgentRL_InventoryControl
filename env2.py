@@ -736,8 +736,8 @@ class MultiAgentInvManagementDiv1(MultiAgentEnv):
             
             infos[node_name] = meta_info
 
-        if self.bullwhip == True:
-            infos['overall_profit'] = total_profit
+        #if self.bullwhip == True:
+        infos['overall_profit'] = total_profit
 
         for key,value in rewards.items():
             if isinstance(value, np.ndarray):
