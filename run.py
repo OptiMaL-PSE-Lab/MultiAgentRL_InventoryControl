@@ -16,7 +16,7 @@ import time
 from ray.rllib.algorithms.ppo import PPOConfig
 import json 
 from ray.rllib.policy.policy import PolicySpec #For policy mapping
-from model import GNNActorCriticModel
+#from model import GNNActorCriticModel
 
 
 def ensure_dir(file_path):
@@ -24,7 +24,7 @@ def ensure_dir(file_path):
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-ModelCatalog.register_custom_model("gnn_model", GNNActorCriticModel)
+#ModelCatalog.register_custom_model("gnn_model", GNNActorCriticModel)
 #import ray.rllib.algorithms
 #from ray.rllib.algorithms.maddpg.maddpg import MADDPGConfig
 ray.shutdown()
@@ -133,7 +133,8 @@ print("PG Keys", policy_graphs.keys())
 
 def policy_mapping_fn(agent_id, episode, worker, **kwargs):
     '''Maps each Agent's ID with a different policy. So each agent is trained with a diff policy.'''
-    get_policy_key = lambda agent_id: f"pol{agent_id + 1}"  # noqa: E731
+    print("agent id in policy mapping function", agent_id)
+    get_policy_key = lambda agent_id: f"{agent_id}"  # noqa: E731
     return get_policy_key(agent_id)
 
 # Policy Mapping function to map each agent to appropriate stage policy
@@ -188,14 +189,14 @@ marl_config = {
     "multiagent": {
     # Policy mapping function to map agents to policies
         "policy_mapping_fn": policy_mapping_fn,
-        "policies": {"0_00_0", "0_00_1", "1_01_0", "1_01_1", "2_02_0", "2_02_1"},
+        #"policies": {"0_00_0", "0_00_1", "1_01_0", "1_01_1", "2_02_0", "2_02_1"},
         "observation_fn": central_critic_observer,
-        "policies_to_train":["0_00_0", "0_00_1", "1_01_0", "1_01_1", "2_02_0", "2_02_1"]
+        #"policies_to_train":["0_00_0", "0_00_1", "1_01_0", "1_01_1", "2_02_0", "2_02_1"]
     },
     "max_seq_len": 10,
     "env": "MultiAgentInvManagementDiv", 
     "env_config": {"seed": SEED},
-    "config": {"model": {"custom_model": "gnn_model"}}
+    #"config": {"model": {"custom_model": "gnn_model"}}
     }
 
 rl_config = {             
@@ -218,7 +219,7 @@ algo_config.checkpointing(export_native_model_files=True,
                           checkpoint_trainable_policies_only = True)
 
 algo = algo_config.build()
-
+print("built")
 results = tune.Tuner(
         "PPO",
         param_space=algo_config.to_dict(),
