@@ -18,6 +18,9 @@ import json
 from ray.rllib.policy.policy import PolicySpec #For policy mapping
 #from model import GNNActorCriticModel
 
+config = {"connections":{0: [1,2], 1:[3,4,5], 2:[3,4,5], 3:[], 4:[], 5:[]},
+          "num_products":2, 
+          "num_nodes":6}
 
 def ensure_dir(file_path):
     directory = os.path.dirname(file_path)
@@ -48,10 +51,9 @@ for i in range(num_nodes * num_products):
     agent_ids.append(agent_id)"""
 
 # Test environment
-config = {"connections":{0: [1], 1:[2], 2:[]}}
 test_env = MultiAgentInvManagementDiv(config)
 obs_space = test_env.observation_space
-print(obs_space)
+print("obs space",obs_space)
 act_space = test_env.action_space
 print(act_space)
 num_agents = test_env.num_agents
@@ -181,7 +183,6 @@ def central_critic_observer(agent_obs, **kw):
 # Register environment
 def env_creator(config):
     return MultiAgentInvManagementDiv(config = config)
-config = {}
 tune.register_env("MultiAgentInvManagementDiv", env_creator)   # noqa: E501
 
 

@@ -184,9 +184,9 @@ marl_config = {
     "multiagent": {
     # Policy mapping function to map agents to policies
         "policy_mapping_fn": policy_mapping_fn,
-        "policies": {"0_00_0", "0_00_1", "1_01_0", "1_01_1", "2_02_0", "2_02_1"},
+        "policies": policy_dict(),
         "observation_fn": central_critic_observer,
-        "policies_to_train":["0_00_0", "0_00_1", "1_01_0", "1_01_1", "2_02_0", "2_02_1"]
+        #"policies_to_train":["0_00_0", "0_00_1", "1_01_0", "1_01_1", "2_02_0", "2_02_1"]
     },
     "max_seq_len": 10,
     "env": "MultiAgentInvManagementDiv", 
@@ -194,17 +194,6 @@ marl_config = {
     "custom": {"custom model": "gnn_model"}
     }
 
-rl_config = {             
-    "multiagent": {
-    # Policy mapping function to map agents to policies
-        "policy_mapping_fn": single_policy_mapping_fn,
-        "policies": {"0_00_0"},
-        "policies_to_train":["0_00_0"]
-    },
-    "max_seq_len": 10,
-    "env": "MultiAgentInvManagementDiv1", 
-    "env_config": {"seed": SEED},
-    }
 
 algo_config = PPOConfig()
 algo_config.__dict__.update(**marl_config)

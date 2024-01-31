@@ -352,7 +352,8 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
             if len(self.connections[i]) > 1:
                 self.backlog_to[i] = dict()
                 for node in self.connections[i]:
-                    self.backlog_to[i][node] = 0
+                    if node not in self.backlog_to[i]:
+                        self.backlog_to[i][node] = dict()
                     for product in range(self.num_products):
                         self.backlog_to[i][node][product] = 0 
 
@@ -920,15 +921,6 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
     
 
 
-
-#test
-
-config = {}
-test_env = MultiAgentInvManagementDiv(config=config)
-print(test_env.obs)
-for i in range(10):
-    test_env.step
-    i+=1
       
 print("environment has been tested individually")
 '''
