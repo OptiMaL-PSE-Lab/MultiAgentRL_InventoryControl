@@ -886,14 +886,14 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
 
         # Shift delay down with every time-step
         if self.max_delay > 1 and t >= 1:
-            self.time_dependent_state[t, :, 0:self.max_delay - 1] = self.time_dependent_state[t - 1, :,
+            self.time_dependent_state[t, :, :, 0:self.max_delay - 1] = self.time_dependent_state[t - 1, :, :,
                                                                     1:self.max_delay]
         for product in range(self.num_products):
             # Delayed states of first node
-            self.time_dependent_state[t, 0, self.delay[0] - 1, product] = self.order_r[t, 0, product]
+            self.time_dependent_state[t, 0, product, self.delay[0] - 1] = self.order_r[t, 0, product]
             # Delayed states of rest of n:
             for i in range(1, m):
-                self.time_dependent_state[t, i, self.delay[i] - 1, product] = \
+                self.time_dependent_state[t, i, product, self.delay[i] - 1] = \
                     self.ship_to_list[t][self.upstream_node[i]][i][product]
             
     def rescale(self, val, min_val, max_val, A=-1, B=1):
