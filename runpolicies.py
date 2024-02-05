@@ -1,4 +1,4 @@
-from env3 import MultiAgentInvManagementDiv
+from env3runn import MultiAgentInvManagementDiv
 import gymnasium as gym
 from gymnasium.spaces import Dict, Box
 import numpy as np 

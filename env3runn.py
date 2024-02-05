@@ -64,9 +64,9 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
 
         # Structure
         self.num_products = config.get("num_products",2)
-        self.num_nodes = config.get("num_nodes", 3)
+        self.num_nodes = config.get("num_nodes", 6)
 
-        self.connections = config.get("connections", {0: [1], 1: [2], 2: []})
+        self.connections = config.get("connections", {0: [1,2], 1:[3,4,5], 2:[3,4,5], 3:[], 4:[], 5:[]})
         self.network = create_network(self.connections)
         self.order_network = np.transpose(self.network)
         self.retailers = get_retailers(self.network)
@@ -96,7 +96,9 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
         self.prev_actions = config.get("prev_actions", True)
         self.prev_demand = config.get("prev_demand", True)
         self.prev_length = config.get("prev_length", 1)
-        self.delay = config.get("delay", np.array([1,2,1,1], dtype = np.int8))
+        delay_init = np.array([1,2,3,4,5,6,7])
+        self.delay = delay_init
+        #self.delay = config.get("delay", np.array([1,2,1,1], dtype = np.int8))
         self.max_delay = np.max(self.delay)
 
         #if there is no maximum delay, then no time dependency == False 
@@ -518,8 +520,6 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
         self.order_r[t, :, :] = np.minimum(
             np.maximum(self.order_r[t, :, :], np.zeros((self.num_nodes, self.num_products))), self.order_max)
         
-        print(node_ids)
-
         # Demand of goods at each stage
         # Demand at last (retailer stages) is customer demand
         for node in self.retailers:
@@ -667,7 +667,7 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
                                         # If amount being shipped less than amount ordered
                                         if self.ship_to_list[t][i][node][product] < \
                                         self.order_r[t, node, product] + self.backlog_to[i][node][product]:
-                                            self.ship_to_list[t][i][node] += 1  
+                                            self.ship_to_list[t][i][node][product] += 1  
                                             # increase amount shipped to node
                                             ship_amount -= 1  
                                             # reduce amount of shipped goods left
