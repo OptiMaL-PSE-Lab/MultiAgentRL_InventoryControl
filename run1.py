@@ -119,37 +119,28 @@ def get_stage(node, network):
 agent_ids = []
 network = create_network(config["connections"])
 echelons = {node: get_stage(node, network) for node in range(len(network))}
-
-agent_ids = []
 agent_ids = [f"{echelons[node]}_{node:02d}_{product}" for node in range(len(network)) for product in range(num_products)]
+print(agent_ids)
 
 # Define policies to train
 policy_graphs = {}
 for i in range(num_agents):
     policy_graphs[agent_ids[i]] = None, cc_obs_space, act_space, {}
 
-def policy_dict():
-    return {f"{agent_id}": PolicySpec() for agent_id in agent_ids}
+print(policy_graphs)
 
-print("PG Keys", policy_graphs.keys())
+def policy_mapping(agent_id, episode, worker, **kwargs):
+    return agent_id
+
+def policy_dict():
+    return {f"{agent_id}": PolicySpec(config=config.overrides(agent_id=agent_id)) for agent_id in agent_ids}
 
 def policy_mapping_fn(agent_id, episode, worker, **kwargs):
     '''Maps each Agent's ID with a different policy. So each agent is trained with a diff policy.'''
     print("agent id in policy mapping function", agent_id)
-    get_policy_key = lambda agent_id: f"{agent_id}"  # noqa: E731
-    return get_policy_key(agent_id)
+    get_policy_key = lambda agent_id: f"{agent_id}" 
+    return str(get_policy_key(agent_id))
 
-# Policy Mapping function to map each agent to appropriate stage policy
-def policy_mapping_fn1(agent_id, episode, **kwargs):
-    for i in range(num_nodes * num_products):
-        if agent_id.startswith(agent_ids[i]):
-            return agent_ids[i]
-
-# Policy Mapping function to map each agent to appropriate stage policy
-def single_policy_mapping_fn(agent_id, episode, **kwargs):
-    for i in range(num_nodes * num_products):
-        if agent_id.startswith(agent_ids[i]):
-            return '0_00_0'
         
 def central_critic_observer(agent_obs, **kw):
     """agent observation includes all agents observation data for 
@@ -189,29 +180,24 @@ tune.register_env("MultiAgentInvManagementDiv", env_creator)   # noqa: E501
 marl_config = {             
     "multiagent": {
     # Policy mapping function to map agents to policies
-        "policy_mapping_fn": policy_mapping_fn,
-        "policies": policy_dict(),
-        "observation_fn": central_critic_observer,
+        "policy_mapping_fn": policy_mapping,
+        "policies": {'0_00_0': PolicySpec(), 
+                     '0_00_1': PolicySpec(), 
+                     '1_01_0': PolicySpec(),
+                     '1_01_1': PolicySpec(),
+                     '2_02_0': PolicySpec(),
+                     '2_02_1': PolicySpec(),
+                     },
+        #"observation_fn": central_critic_observer,
         #will automatically train all policies if left empty
         #"policies_to_train":["0_00_0", "0_00_1", "1_01_0", "1_01_1", "2_02_0", "2_02_1"]
     },
-    "max_seq_len": 10,
+    #"max_seq_len": 10,
     "env": "MultiAgentInvManagementDiv", 
     "env_config": {"seed": SEED},
     #"config": {"model": {"custom_model": "gnn_model"}}
     }
 
-rl_config = {             
-    "multiagent": {
-    # Policy mapping function to map agents to policies
-        "policy_mapping_fn": single_policy_mapping_fn,
-        "policies": {"0_00_0"},
-        "policies_to_train":["0_00_0"]
-    },
-    "max_seq_len": 10,
-    "env": "MultiAgentInvManagementDiv1", 
-    "env_config": {"seed": SEED},
-    }
 
 algo_config = PPOConfig()
 algo_config.__dict__.update(**marl_config)

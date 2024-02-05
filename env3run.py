@@ -64,9 +64,9 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
 
         # Structure
         self.num_products = config.get("num_products",2)
-        self.num_nodes = config.get("num_nodes", 3)
+        self.num_nodes = config.get("num_nodes", 6)
 
-        self.connections = config.get("connections", {0: [1], 1: [2], 2: []})
+        self.connections = config.get("connections", {0: [1,2], 1:[3,4,5], 2:[3,4,5], 3:[], 4:[], 5:[]})
         self.network = create_network(self.connections)
         self.order_network = np.transpose(self.network)
         self.retailers = get_retailers(self.network)
@@ -96,7 +96,8 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
         self.prev_actions = config.get("prev_actions", True)
         self.prev_demand = config.get("prev_demand", True)
         self.prev_length = config.get("prev_length", 1)
-        self.delay = config.get("delay", np.array([1,2,1,1], dtype = np.int8))
+        delay_init = np.array([1,2,3,4,5,6,7])
+        self.delay = delay_init
         self.max_delay = np.max(self.delay)
 
         #if there is no maximum delay, then no time dependency == False 
@@ -330,7 +331,7 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
         self.backlog = np.zeros([periods + 1,num_nodes, num_products])  # backlog
         self.demand = np.zeros([periods + 1, num_nodes, num_products])
         if self.time_dependency:
-            self.time_dependent_state = np.zeros([periods, num_nodes, num_products, self.max_delay])
+            self.time_dependent_state = np.zeros([periods, num_nodes, num_nodes, self.num_products])
 
 
         # Initialise list of dicts tracking goods shipped from one node to another
@@ -667,9 +668,12 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
                                         # If amount being shipped less than amount ordered
                                         if self.ship_to_list[t][i][node][product] < \
                                         self.order_r[t, node, product] + self.backlog_to[i][node][product]:
-                                            self.ship_to_list[t][i][node] += 1  
-                                            # increase amount shipped to node
-                                            ship_amount -= 1  
+                                            if not isinstance(self.ship_to_list[t][i], dict):
+                                                raise KeyError("Expected a dictionary, but found {}, {}".format(type(self.ship_to_list[t][i]), self.ship_to_list))
+                                            else:
+                                                self.ship_to_list[t][i][node][product] += 1  
+                                                # increase amount shipped to node
+                                                ship_amount -= 1  
                                             # reduce amount of shipped goods left
 
                                 # Counter to escape while loop with error if infinite
@@ -890,10 +894,12 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
                                                                     1:self.max_delay]
         for product in range(self.num_products):
             # Delayed states of first node
-            self.time_dependent_state[t, 0, self.delay[0] - 1, product] = self.order_r[t, 0, product]
+            if self.delay[0] >0:
+                self.time_dependent_state[t, 0, self.delay[0] - 1, product] = self.order_r[t, 0, product]
             # Delayed states of rest of n:
             for i in range(1, m):
-                self.time_dependent_state[t, i, self.delay[i] - 1, product] = \
+                if self.delay[i]>0:
+                    self.time_dependent_state[t, i, self.delay[i] - 1, product] = \
                     self.ship_to_list[t][self.upstream_node[i]][i][product]
             
     def rescale(self, val, min_val, max_val, A=-1, B=1):
@@ -920,35 +926,12 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
 
         return val
     
+config = {}
+test_env = MultiAgentInvManagementDiv(config=config)
+print(test_env.obs)
+for i in range(10):
+    test_env.step
+    i+=1
+print(test_env.ship_to_list)
 
-
-      
 print("environment has been tested individually")
-'''
-print(test_env.observation_space)
-print(type(test_env.observation_space))
-
-
-
-    def plots(self):
-        #plt.plot(self.inv , self.period)
-        # assume self.inv is already initialized
-        periods = self.inv.shape[0] 
-        num_nodes = self.inv.shape[1]
-
-        # loop over columns and plot inv vs periods
-        for i in range(num_nodes):
-            plt.plot(range(periods), self.inv[:,i], label='Node {}'.format(i))
-
-        # add labels and title
-        plt.xlabel('Period')
-        plt.ylabel('Inv')
-        print(plt.show)
-'''
-
-'''
-using this to test the code of the environment to see if it runs 
-config = {
-}
-x = MultiAgentInvManagementDiv(config=config)
-'''

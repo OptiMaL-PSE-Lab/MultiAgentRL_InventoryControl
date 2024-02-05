@@ -36,9 +36,9 @@ ray.init(resources={"CUSTOM_RESOURCE":100}, log_to_driver= False)
 #todo - create centralised critic model class in models.py file 
 
 
-num_nodes = 3
+num_nodes = config["num_nodes"]
 num_periods = 2
-num_products = 2 
+num_products = config["num_products"]
 
 # Set script seed
 SEED = 52
@@ -123,10 +123,12 @@ echelons = {node: get_stage(node, network) for node in range(len(network))}
 agent_ids = []
 agent_ids = [f"{echelons[node]}_{node:02d}_{product}" for node in range(len(network)) for product in range(num_products)]
 
+print(agent_ids)
 # Define policies to train
 policy_graphs = {}
 for i in range(num_agents):
     policy_graphs[agent_ids[i]] = None, cc_obs_space, act_space, {}
+
 
 def policy_dict():
     return {f"{agent_id}": PolicySpec() for agent_id in agent_ids}
@@ -186,179 +188,37 @@ def env_creator(config):
 tune.register_env("MultiAgentInvManagementDiv", env_creator)   # noqa: E501
 
 
-marl_config = {             
-    "multiagent": {
-    # Policy mapping function to map agents to policies
-        "policy_mapping_fn": policy_mapping_fn,
-        "policies": policy_dict(),
-        "observation_fn": central_critic_observer,
-        #will automatically train all policies if left empty
-        #"policies_to_train":["0_00_0", "0_00_1", "1_01_0", "1_01_1", "2_02_0", "2_02_1"]
-    },
-    "max_seq_len": 10,
-    "env": "MultiAgentInvManagementDiv", 
-    "env_config": {"seed": SEED},
-    #"config": {"model": {"custom_model": "gnn_model"}}
-    }
 
-rl_config = {             
-    "multiagent": {
-    # Policy mapping function to map agents to policies
-        "policy_mapping_fn": single_policy_mapping_fn,
-        "policies": {"0_00_0"},
-        "policies_to_train":["0_00_0"]
-    },
-    "max_seq_len": 10,
-    "env": "MultiAgentInvManagementDiv1", 
-    "env_config": {"seed": SEED},
-    }
+algo_w_5_policies = (
+    PPOConfig()
+    .environment(
+        env= "MultiAgentInvManagementDiv",
+        env_config={
+            "num_agents": num_agents,
+        },
+    )
+    .multi_agent(
+        policies= policy_dict(),
+        # Map "agent0" -> "pol0", etc...
+        policy_mapping_fn=(
+            lambda agent_id, episode, worker, **kwargs: (
+        print(f"Agent ID: {agent_id}"),
+        str(agent_id)
+    )[1]
+    )
+    )
+    .build()
+)
+iterations = 60
+for i in range(iterations):
+    algo_w_5_policies.train()
+    path_to_checkpoint = algo_w_5_policies.save()
+    print(
+                "An Algorithm checkpoint has been created inside directory: "
+                f"'{path_to_checkpoint}'. It should contain 5 policies in the 'policies/' sub dir."
+            )
 
-algo_config = PPOConfig()
-algo_config.__dict__.update(**marl_config)
-
-#sets the config's checkpointing settings
-algo_config.checkpointing(export_native_model_files=True, 
-                          checkpoint_trainable_policies_only = True)
-
-algo = algo_config.build()
-print("built")
-results = tune.Tuner(
-        "PPO",
-        param_space=algo_config.to_dict(),
-        run_config=air.RunConfig(
-            stop={"training_iteration": 1},
-            verbose=1,
-            checkpoint_config=air.CheckpointConfig(
-                checkpoint_frequency=1, checkpoint_at_end=True
-            ),
-        ),
-    ).fit()
-print("Pre-training done.")
-
-best_checkpoint = results.get_best_result().checkpoint
-print(f".. best checkpoint was: {best_checkpoint}")
 # Let's terminate the algo for demonstration purposes.
-#algo_config.stop()
 
-
-
-"""timestamp = str(int(time.time()))
-timestamp_dir = os.path.join("/Users/nikikotecha/Documents/PhD/sS/Checkpoint", timestamp)
-os.makedirs(timestamp_dir, exist_ok = True)
-save_path = os.path.join(timestamp_dir, "checkpoint")
-ensure_dir(save_path)
-load_path = "/Users/nikikotecha/Documents/PhD/sS/Checkpoint"
-LP_load_path = "LP_results/sS"
-load_iteration = str(100)
-load_agent_path = load_path + '/checkpoint_000' + load_iteration + '/checkpoint-' + load_iteration
-
-train_agent = True
-if train_agent:  
-    # Training
-    iters = 80
-    results = []
-    epc =[]
-    reward =[]
-    time = []
-    timestep = 0 
-    for i in range(iters):
-        print("iters: {}".format(i))
-        res = algo.train()
-        #weights = algo.get_weights()
-        algo.save(save_path)
-"""
-#restored_policy = Policy.from_checkpoint("/Users/nikikotecha/Documents/PhD/sS/Checkpoint/1697121757/checkpoint/checkpoint_000004/policies/default_policy")
-#print("Restored policy")
-
-"""for i in range(iters):
-        timestep += i
-        time.append(timestep)
-        res = algo.train()
-        ensure_dir(save_path + str(i))
-        algo.save_checkpoint(save_path +str(i))
-else:
-    restored_policy = Policy.from_checkpoint("Checkpoints/policies/default_policy/policy_state.pkl")
-    print("restored policy")"""
-
-"""else:
-    algo.restore(load_agent_path)
-    results_load_path = load_path + '/results.npy'
-    results = np.load(results_load_path, allow_pickle= True)"""
-
-
-
-"""if save_agent:
-    json_env_config = save_path + '/env_config.json'
-    ensure_dir(json_env_config)
-    with open(json_env_config, 'w') as fp:
-        for key, value in config.items():
-            if isinstance(value, np.ndarray):
-                config[key] = config[key].tolist()
-        json.dump(config, fp)
-    results_save_path = save_path + '/results.npy'
-    np.save(results_save_path, results)
-"""
-"""
-A different variation on how to save and restore the checkpoints in ray 
-results = tune.Tuner(
-    "PPO", 
-    param_space= rl_config.to_dict(),
-    run_config= air.RunConfig(
-        stop= {"training_iteration": 2},
-    verbose=1,
-    checkpoint_config= air.CheckpointConfig(
-        checkpoint_frequency=1, checkpoint_at_end=True
-    )
-    )
-).fit()
-print("pre-traininf done")
-best_checkpoint = results.get_best_result().checkpoint
-print("best checkpoint was {}".format(best_checkpoint))
-#restored_policies = Policy.from_checkpoint()
-
-
-
-results = tune.Tuner(
-    "PPO", 
-    param_space= rl_config,
-    run_config= air.RunConfig(
-        stop= {"training_iteration": 2},
-    verbose=1,
-    checkpoint_config= air.CheckpointConfig(
-        checkpoint_frequency=1, checkpoint_at_end=True
-    )
-    )
-).fit()
-print("pre-training done")
-
-
-"""
-
-
-"""
-configg = PPOConfig().\
-    framework("torch").\
-        rollouts(num_rollout_workers=1).\
-        resources(num_cpus_per_worker=1).\
-            environment(env = "MultiAgentInvManagementDiv", 
-                        env_config={"disable_env_checking": True}).\
-        multi_agent(policies=policy_graphs, 
-                    policy_mapping_fn = policy_mapping_fn)
-
-if ray.is_initialized(): 
-    ray.shutdown()
-
-ray.init()
-train_steps = 2
-experiment_name = "my_exp"
-tuner = tune.Tuner("PPO", param_space=configg, 
-                   run_config = air.RunConfig(
-                       name = experiment_name, 
-                       stop={"timesteps_total": train_steps},
-                       checkpoint_config= air.CheckpointConfig(checkpoint_frequency=50, checkpoint_at_end=True),
-                   ))
-result_grid = tuner.fit()
-
-ray.shutdown()
-
-"""
+algo_w_5_policies.stop()
+print("donee")
