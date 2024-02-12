@@ -16,24 +16,21 @@ import time
 from ray.rllib.algorithms.ppo import PPOConfig
 import json 
 from ray.rllib.policy.policy import PolicySpec #For policy mapping
-#from model import GNNActorCriticModel
+from model import GNNActorCriticModel
 
-config = {"connections":{0: [1], 1:[2], 2:[]},
-          "num_products":8, 
-          "num_nodes":3}
-#{0: [1,2], 1:[3,4,5], 2:[3,4,5], 3:[], 4:[], 5:[]}
+config = {"connections":{0: [1], 1:[2], 2:[3], 3:[4], 4:[5], 5:[]},
+          "num_products":2, 
+          "num_nodes":6}
+
 def ensure_dir(file_path):
     directory = os.path.dirname(file_path)
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-#ModelCatalog.register_custom_model("gnn_model", GNNActorCriticModel)
-#import ray.rllib.algorithms
-#from ray.rllib.algorithms.maddpg.maddpg import MADDPGConfig
-ray.shutdown()
-ray.init(resources={"CUSTOM_RESOURCE":100}, log_to_driver= False)
+ModelCatalog.register_custom_model("gnn_model", GNNActorCriticModel)
 
-#todo - create centralised critic model class in models.py file 
+ray.shutdown()
+ray.init(log_to_driver= False)
 
 
 num_nodes = config["num_nodes"]

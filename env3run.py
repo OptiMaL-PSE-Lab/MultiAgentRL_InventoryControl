@@ -64,9 +64,9 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
 
         # Structure
         self.num_products = config.get("num_products",2)
-        self.num_nodes = config.get("num_nodes", 6)
+        self.num_nodes = config.get("num_nodes", 3)
 
-        self.connections = config.get("connections", {0: [1,2], 1:[3,4,5], 2:[3,4,5], 3:[], 4:[], 5:[]})
+        self.connections = config.get("connections", {0: [1], 1:[2], 2:[]})
         self.network = create_network(self.connections)
         self.order_network = np.transpose(self.network)
         self.retailers = get_retailers(self.network)
@@ -96,7 +96,7 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
         self.prev_actions = config.get("prev_actions", True)
         self.prev_demand = config.get("prev_demand", True)
         self.prev_length = config.get("prev_length", 1)
-        delay_init = np.array([1,2,3,4,5,6,7])
+        delay_init = np.array([1,2,3,1,1,2,1,1,2,3,4,5])
         self.delay = delay_init
         self.max_delay = np.max(self.delay)
 
@@ -195,6 +195,7 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
                     high=np.ones(3 + self.prev_length*2 + self.max_delay, dtype=np.float64) * self.b,
                     dtype=np.float64,
                     shape=(3 + self.max_delay + self.prev_length*2,))
+                    
 
 
         self.state = {}
@@ -314,7 +315,6 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
         self.retailer_demand = dict()
         for i in range(self.customer_demand.shape[0]):
             retailer = self.retailers[i]
-            print(self.retailers)
             self.retailer_demand[retailer] = dict()
 
             for product in range(self.num_products):
@@ -350,13 +350,12 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
 
         self.backlog_to = dict()
         for i in range(self.num_nodes):
-            if len(self.connections[i]) > 1:
-                self.backlog_to[i] = dict()
-                for node in self.connections[i]:
-                    if node not in self.backlog_to[i]:
-                        self.backlog_to[i][node] = dict()
-                    for product in range(self.num_products):
-                        self.backlog_to[i][node][product] = 0 
+            self.backlog_to[i] = dict()
+            for node in self.connections[i]:
+                #if node not in self.backlog_to[i]:
+                self.backlog_to[i][node] = dict()
+                for product in range(self.num_products):
+                    self.backlog_to[i][node][product] = int(5)
 
         # initialization
         self.period = 0  # initialize time
@@ -494,7 +493,6 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
                     s_value1, S_value2 = action_dict[node_name]
                     self.s_value1 = s_value1
                     self.S_value2 = S_value2
-                    print("s_values", (self.s_value1, self.S_value2))
                     self.rescales1 = self.rev_scale(self.s_value1, 0, self.order_max[node, product], self.a, self.b)
                     self.rescales2= self.rev_scale(self.S_value2, 0, self.order_max[node, product], self.a, self.b)
 
@@ -519,8 +517,6 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
         self.order_r[t, :, :] = np.minimum(
             np.maximum(self.order_r[t, :, :], np.zeros((self.num_nodes, self.num_products))), self.order_max)
         
-        print(node_ids)
-
         # Demand of goods at each stage
         # Demand at last (retailer stages) is customer demand
         for node in self.retailers:
@@ -552,25 +548,28 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
                 # If shipping to only one downstream node, 
                 # the total amount shipped is equivalent to amount shipped to
                 # downstream node
+                
                 if self.num_downstream[i] == 1:
                     self.ship_to_list[t][i][self.connections[i][0]][product] = self.ship[t, i, product]
                 # If node has more than one downstream nodes, 
                 # then the amount shipped needs to be split appropriately
+                    
                 elif self.num_downstream[i] > 1:
                     # Extract the total amount shipped in this period
                     ship_amount = self.ship[t, i, product]
-                    # If shipment equal to or more than demand, 
-                    # send ordered amount to each downstream node
+
+                    # If shipment equal to or more than demand, send ordered amount to each downstream node
                     if self.ship[t, i, product] >= self.demand[t, i, product]:
                         # If there is backlog, fulfill it first then fulfill demand
                         if self.backlog[t, i, product] > 0:
                             # Fulfill backlog first
                             while_counter = 0  # to exit infinite loops if error
-                            # Keep distributing shipment across downstream nodes 
-                            # until there is no backlog or no goods left
-                            #while sum(list(self.backlog_to[i][product].values())) > 0 \
-                            while sum(self.backlog_to[i][node][product] for node in self.backlog_to[i]) > 0 \
-                            and ship_amount > 0:
+                            # Keep distributing shipment across downstream nodes until there is no backlog or no goods left
+                            sum1 = 0
+                            for child_node in self.backlog_to[i]:
+                                sum1 += self.backlog_to[i][child_node][product]
+
+                            while sum1 >0 and ship_amount > 0:
                                 # Keep distributing shipped goods to downstream nodes
                                 for node in self.connections[i]:
                                     # If there is a backlog towards a downstream node ship 
@@ -586,10 +585,9 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
                                 # Counter to escape while loop with error if infinite
                                 while_counter += 1
                                 if while_counter > self.demand_max[i][product] * 2:
-                                    raise Exception("Infinite Loop 1")
+                                    raise Exception("Infinite Loop 1", t, sum1, ship_amount, self.backlog_to, self.ship_to_list, self.demand_max)
 
-                            # If there is still left-over shipped goods fulfill 
-                            # current demand if any
+                            # If there is still left-over shipped goods fulfill current demand if any
                             if ship_amount > 0 and self.demand[t, i, product] > 0:
                                 # Create a dict of downstream nodes' demand/orders
                                 outstanding_order = dict()
@@ -599,10 +597,9 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
                                         outstanding_order[node][product] = self.order_r[t, node, product]
 
                                 while_counter = 0
-                                # Keep distributing shipment across downstream nodes until 
-                                # there is no backlog or no outstanding orders left
+                                # Keep distributing shipment across downstream nodes until there is no backlog or no outstanding orders left
                                 while ship_amount > 0 and \
-                                        any(sum(outstanding_order[node].values()) > 0 for node in self.connections[i]):
+                                        (sum(outstanding_order[node][product]) > 0 for node in self.connections[i]):
                                     for node in self.connections[i]:
                                         for product in range(self.num_products):
                                             if outstanding_order[node][product] > 0:
@@ -623,71 +620,78 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
                                     for product in range(self.num_products):
                                         self.backlog_to[i][node][product] += outstanding_order[node][product]
 
-                        # If there is no backlog
+                        # If shipment is insufficient to meet downstream demand
+                        elif self.ship[t, i, product] < self.demand[t, i, product]:
+                            while_counter = 0
+                            # Distribute amount shipped to downstream nodes
+                            if self.backlog[t, i, product] > 0:
+                                # Fulfill backlog first
+                                while_counter = 0  # to exit infinite loops if error
+                                # Keep distributing shipment across downstream nodes 
+                                # until there is no backlog or no goods left
+                            
+                                sum1 = 0
+                                for child_node in self.backlog_to[i]:
+                                    sum1 += self.backlog_to[i][child_node][product]
+                                
+                                if sum1 == 0 or sum1<0:
+                                    raise Exception("sum1", sum1, ship_amount , self.backlog_to)
+                                
+                                #while sum(list(self.backlog_to[i][product].values())) > 0 and ship_amount >= 0:
+                                while sum1 > 0 and ship_amount >= 0:
+                                    # Keep distributing shipped goods to downstream nodes
+                                    for node in self.connections[i]:
+                                        # If there is a backlog towards a downstream node 
+                                        # ship a unit of product to that node
+                                        for product in range(self.num_products):
+                                            if self.backlog_to[i][node][product] > 0:
+                                                self.ship_to_list[t][i][node][product] += 1 
+                                                # increase amount shipped to node
+                                                self.backlog_to[i][node][product] -= 1  
+                                                # decrease its corresponding backlog
+                                                ship_amount -= 1  
+                                                # reduce amount of shipped goods left
+
+                                    # Counter to escape while loop with error if infinite
+                                    while_counter += 1
+                                    if while_counter > self.demand_max[i][product]:
+                                        raise Exception("Infinite Loop 3")
+
+                            else:
+                                # Keep distributing shipped goods to downstream nodes until 
+                                # no goods left
+                                while ship_amount > 0:
+                                    for node in self.connections[i]:
+                                        for product in range(self.num_products):
+                                            # If amount being shipped less than amount ordered
+                                            if self.ship_to_list[t][i][node][product] < \
+                                            self.order_r[t, node, product] + self.backlog_to[i][node][product]:
+                                                
+                                                self.ship_to_list[t][i][node][product] += 1  
+                                                # increase amount shipped to node
+                                                ship_amount -= 1  
+                                                # reduce amount of shipped goods left
+                                                if ship_amount == 0:
+                                                    break # Exit the inner loop if ship_amount is exhausted
+                                    # Counter to escape while loop with error if infinite
+                                    while_counter += 1
+                                    if while_counter > self.demand_max[i][product]:
+                                        raise Exception("Infinite Loop 4 {}, {}, {}, shipto{}, {}, orderu{}, backlog{}".format(t, self.ship, ship_amount, self.demand_max, self.ship_to_list, self.order_r, self.backlog_to))
+
+                            # If there is no backlog
                         else:
                             for node in self.connections[i]:
-                                for product in range(self.num_products):
-                                    self.ship_to_list[t][i][node][product] += self.order_r[t, node, product]
-                                    ship_amount = ship_amount - self.order_r[t, node, product]
+                                self.ship_to_list[t][i][node][product] += self.order_r[t, node, product]
+                                ship_amount = ship_amount - self.order_r[t, node, product]
                             if ship_amount > 0:
                                 print("WTF")
 
-                    # If shipment is insufficient to meet downstream demand
-                    elif self.ship[t, i, product] < self.demand[t, i, product]:
-                        while_counter = 0
-                        # Distribute amount shipped to downstream nodes
-                        if self.backlog[t, i, product] > 0:
-                            # Fulfill backlog first
-                            while_counter = 0  # to exit infinite loops if error
-                            # Keep distributing shipment across downstream nodes 
-                            # until there is no backlog or no goods left
-                            while sum(self.backlog_to[i][node][product] for node in self.backlog_to[i]) > 0 \
-                                                        and ship_amount > 0:
-                                # Keep distributing shipped goods to downstream nodes
-                                for node in self.connections[i]:
-                                    # If there is a backlog towards a downstream node 
-                                    # ship a unit of product to that node
-                                    for product in range(self.num_products):
-                                        if self.backlog_to[i][node][product] > 0:
-                                            self.ship_to_list[t][i][node][product] += 1 
-                                            # increase amount shipped to node
-                                            self.backlog_to[i][node][product] -= 1  
-                                            # decrease its corresponding backlog
-                                            ship_amount -= 1  
-                                            # reduce amount of shipped goods left
-
-                                # Counter to escape while loop with error if infinite
-                                while_counter += 1
-                                if while_counter > self.demand_max[i][product]:
-                                    raise Exception("Infinite Loop 3")
-
-                        else:
-                            # Keep distributing shipped goods to downstream nodes until 
-                            # no goods left
-                            while ship_amount > 0:
-                                for node in self.connections[i]:
-                                    for product in range(self.num_products):
-                                        # If amount being shipped less than amount ordered
-                                        if self.ship_to_list[t][i][node][product] < \
-                                        self.order_r[t, node, product] + self.backlog_to[i][node][product]:
-                                            
-                                            self.ship_to_list[t][i][node][product] += 1  
-                                            # increase amount shipped to node
-
-                                            ship_amount -= 1  
-                                            # reduce amount of shipped goods left
-                                            if ship_amount == 0:
-                                                break # Exit the inner loop if ship_amount is exhausted
-                                # Counter to escape while loop with error if infinite
-                                while_counter += 1
-                                if while_counter > self.demand_max[i][product]:
-                                    raise Exception("Infinite Loop 4")
-
                         # Log unfulfilled order amount as backlog
-                        for node in self.connections[i]:
-                            for product in range(self.num_products):
-                                self.backlog_to[i][node][product] += \
+                    for node in self.connections[i]:
+                        for product in range(self.num_products):
+                            self.backlog_to[i][node][product] += \
                                 self.order_r[t, node, product] - self.ship_to_list[t][i][node][product]
+
         # Update backlog demand increases backlog while fulfilling demand reduces it
 
         self.backlog[t + 1, :, :] = \
@@ -928,11 +932,3 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
 
         return val
     
-config = {}
-test_env = MultiAgentInvManagementDiv(config=config)
-print(test_env.obs)
-for i in range(10):
-    test_env.step
-    i+=1
-print(test_env.ship_to_list)
-print("environment has been tested individually")
