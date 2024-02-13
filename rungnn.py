@@ -13,7 +13,7 @@ from ray.rllib.algorithms.ppo import PPOConfig
 import json 
 from ray.rllib.policy.policy import PolicySpec #For policy mapping
 from model import GNNActorCriticModel
-from ccmodel import CentralizedCriticModel
+from ccmodel import CentralizedCriticModel, FillInActions
 from ray.rllib.algorithms.callbacks import DefaultCallbacks
 from ray.rllib.policy.sample_batch import SampleBatch
 
@@ -32,19 +32,22 @@ ray.init(log_to_driver= False)
 
 def central_critic_observer(agent_obs, **kw):
     """Rewrites the agent obs to include opponent data for training."""
+    agents = [*agent_obs]
+    num_agents = len(agents)
+    obs_space = len(agent_obs[agents[0]])
 
-    new_obs = {
-        0: {
-            "own_obs": agent_obs[0],
-            "opponent_obs": agent_obs[1],
-            "opponent_action": 0,  # filled in by FillInActions
-        },
-        1: {
-            "own_obs": agent_obs[1],
-            "opponent_obs": agent_obs[0],
-            "opponent_action": 0,  # filled in by FillInActions
-        },
-    }
+    new_obs = dict()
+    for agent in agents:
+        new_obs[agent] = dict()
+        new_obs[agent]["own_obs"] = agent_obs[agent]
+        new_obs[agent]["opponent_obs"] = np.zeros((num_agents - 1)*obs_space)
+        new_obs[agent]["opponent_action"] = np.zeros((num_agents - 1))
+        i = 0
+        for other_agent in agents:
+            if agent != other_agent:
+                new_obs[agent]["opponent_obs"][i*obs_space:i*obs_space + obs_space] = agent_obs[other_agent]
+                i += 1
+
     return new_obs
 
 
@@ -52,11 +55,12 @@ config = {"connections":{0: [1], 1:[2], 2:[]},
           "num_products":2, 
           "num_nodes":3}
 
+num_agents= config["num_nodes"] * config["num_products"]
 # Test environment
 test_env = MultiAgentInvManagementDiv(config)
 obs_space = test_env.observation_space
 act_space = test_env.action_space
-num_agents = test_env.num_agents
+
 size = obs_space.shape[0]
 opponent_obs_space = Box(low=np.tile(obs_space.low, num_agents-1), high=np.tile(obs_space.high, num_agents-1),
                          dtype=np.float64, shape=(obs_space.shape[0]*(num_agents-1),))
@@ -151,7 +155,8 @@ def central_critic_observer(agent_obs, **kw):
         new_obs[agent] = dict()
         new_obs[agent]["own_obs"] = agent_obs[agent]
         new_obs[agent]["opponent_obs"] = np.zeros((num_agents - 1)*obs_space)
-        new_obs[agent]["opponent_action"] = np.zeros((num_agents - 1))
+        new_obs[agent]["opponent_action"] = np.zeros(2*(num_agents - 1))
+        #2* as our action space for each agent is (2,)
         i = 0
         for other_agent in agents:
             if agent != other_agent:
@@ -176,21 +181,26 @@ algo_w_5_policies = (
             "num_agents": num_agents,
         },
     )
+    .rollouts(
+        batch_mode="complete_episodes",
+            num_rollout_workers=0,
+            # TODO(avnishn) make a new example compatible w connectors.
+            enable_connectors=False,)
+    .callbacks(FillInActions)
+    .training(
+        model = {"custom_model": "gnn_model",
+                 }
+    )
     .multi_agent(
         policies= policy_graphs,
-        #observation_fn = central_critic_observer, 
         # Map "agent0" -> "pol0", etc...
         policy_mapping_fn=(
             lambda agent_id, episode, worker, **kwargs: (
         print(f"Agent ID: {agent_id}"),
         str(agent_id)
     )[1]
-    )
-    )
-    .training(
-        model = {"fcnet_hiddens": [128,128],
-                 "custom_model": "gnn_model",
-                 }
+    ),
+    observation_fn = central_critic_observer, 
     )
     .build()
 )

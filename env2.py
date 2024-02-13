@@ -50,7 +50,7 @@ def get_retailers(network):
 
     return retailers
 
-class MultiAgentInvManagementDiv1(MultiAgentEnv):
+class MultiAgentInvManagementDiv(MultiAgentEnv):
     def __init__(self, config, **kwargs):
 
         self.config = config.copy()
@@ -736,8 +736,8 @@ class MultiAgentInvManagementDiv1(MultiAgentEnv):
             
             infos[node_name] = meta_info
 
-        #if self.bullwhip == True:
-        infos['overall_profit'] = total_profit
+        if self.bullwhip == True:
+            infos['overall_profit'] = total_profit
 
         for key,value in rewards.items():
             if isinstance(value, np.ndarray):
@@ -877,7 +877,7 @@ class MultiAgentInvManagementDiv1(MultiAgentEnv):
 
 
 #test
-
+'''
 config = {}
 test_env = MultiAgentInvManagementDiv1(config=config)
 print(test_env.obs)
@@ -886,7 +886,7 @@ for i in range(2):
     i+=1
       
 print("environment has been tested individually")
-'''
+
 print(test_env.observation_space)
 print(type(test_env.observation_space))
 

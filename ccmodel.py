@@ -78,7 +78,7 @@ class FillInActions(DefaultCallbacks):
                 low=-1,
                 high=1,
                 dtype=np.float64,
-                shape=(1,)
+                shape=(2,)
             )
         )
         agents = [*original_batches]
@@ -94,7 +94,10 @@ class FillInActions(DefaultCallbacks):
                 action_encoder.transform(np.clip(a, -1, 1))
                 for a in opponent_batch[SampleBatch.ACTIONS]
             ])
-            to_update[:, i] = np.squeeze(opponent_actions)  # <--------------------------
+        # Update only the corresponding columns for the actions of each opponent agent
+            start_col = i * 2 # Start column index for opponent actions
+            end_col = start_col + 2 # End column index for opponent actions
+            to_update[:, start_col:end_col] = np.squeeze(opponent_actions)  # <--------------------------
 
 
 def central_critic_observer(agent_obs, **kw):
