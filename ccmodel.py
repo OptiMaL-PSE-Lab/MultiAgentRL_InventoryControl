@@ -119,3 +119,83 @@ def central_critic_observer(agent_obs, **kw):
                 i += 1
 
     return new_obs
+
+
+"""
+ARCHIVE
+
+class GNNActorCriticModel(TorchModelV2, nn.Module):
+    def __init__(self, obs_space, action_space, num_outputs, model_config, name):
+        TorchModelV2.__init__(self, obs_space, action_space, num_outputs, model_config, name)
+        nn.Module.__init__(self)
+        state_dim = 10
+        message_dim = 70  
+        gnn_hidden_dim = 128  
+        
+        # GNN for message passing [input, hidden, output]
+        self.gnn = GNNLayer(state_dim, gnn_hidden_dim, message_dim)
+        # Actor: Neural network for policy
+        self.actor = FullyConnectedNetwork(
+            Box(
+                low = -np.ones(state_dim),
+                high = np.ones(state_dim),
+                dtype = np.float64,
+                shape = (state_dim,)), 
+                action_space, num_outputs, model_config, name + '_action')
+        # Critic: Neural network for state-value estimation
+        self.critic = FullyConnectedNetwork(
+            obs_space, action_space, 1, model_config, name+ '_vf')
+
+        self._model_in = None 
+    def forward(self, input_dict, state, seq_lens):
+        
+        self._model_in = [input_dict["obs_flat"], state, seq_lens]
+
+        statetensor = input_dict["obs"]["own_obs"]
+        state_tensor = statetensor.unsqueeze(1)
+        opponent_obs = input_dict["obs"]["opponent_obs"].reshape(32,5,10)
+        node_features_concat = torch.cat((state_tensor, opponent_obs), dim = 1)
+
+        adjacency_matrix = [
+            [0, 0, 1, 1, 0, 0],
+            [0, 0, 1, 1, 0, 0],
+            [1, 1, 0, 0, 1, 1],
+            [1, 1, 0, 0, 1, 1],
+            [0, 0, 1, 1, 0, 0],
+            [0, 0, 1, 1, 0, 0]
+        ]
+
+        # Convert it to a PyTorch tensor
+        adj_t = torch.tensor(adjacency_matrix)
+
+        edge_index_single = adj_t.nonzero(as_tuple=False).t().contiguous()
+
+        # Repeat the edge index tensor along the batch dimension (32 times)
+        batch_edge_index = torch.cat([edge_index_single] * 32, dim=1)
+
+        data = Data (x = node_features_concat, edge_index=batch_edge_index)
+
+        # GNN-based message generation
+        message = self.gnn(data)
+
+        # Concatenate message with state for actor input
+        actor_input = torch.cat([state_tensor, message], dim=1)
+
+        # Actor: Select action
+        #action_logits, _ = self.actor({"obs": actor_input}, state, seq_lens)
+        # Critic: Estimate state value
+        #value = self.critic({"obs": state_tensor}, state, seq_lens)
+        return self.actor({
+            "obs": input_dict["obs"]["own_obs"]
+        }, state, seq_lens)
+
+    def value_function(self):
+
+        value_out, _ = self.critic({
+            "obs": self._model_in[0]
+        }, self._model_in[1], self._model_in[2])
+
+        return torch.reshape(value_out, [-1])
+
+
+"""
