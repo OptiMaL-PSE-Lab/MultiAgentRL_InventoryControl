@@ -1,5 +1,5 @@
 from env3run import MultiAgentInvManagementDiv
-from env2 import MultiAgentInvManagementDiv1
+#from env2 import MultiAgentInvManagementDiv1
 import gymnasium as gym
 from ray.rllib.algorithms.ppo import PPOConfig
 from gymnasium.spaces import Dict, Box
@@ -13,9 +13,9 @@ from ray.tune.logger import pretty_print
 from ray import tune 
 import torch 
 import matplotlib.pyplot as plt 
-import seaborn as sns
+#import seaborn as sns
 import pandas as pd
-from mpl_toolkits.mplot3d import Axes3D
+#from mpl_toolkits.mplot3d import Axes3D
 import json
 import os
 
@@ -24,10 +24,10 @@ import os
 ray.init()
 
 # Register environment - OR
-def env_creator1(config):
-    return MultiAgentInvManagementDiv1(config = config)
-config = {"bullwhip": True}
-tune.register_env("MultiAgentInvManagementDiv1", env_creator1)   
+#def env_creator1(config):
+#    return MultiAgentInvManagementDiv1(config = config)
+#config = {"bullwhip": True}
+#tune.register_env("MultiAgentInvManagementDiv1", env_creator1)   
 
 # Register environment - sS
 def env_creator2(config):
@@ -52,8 +52,8 @@ newenv = "/Users/nikikotecha/ray_results/PPO/PPO_MultiAgentInvManagementDiv_711b
 newenv_optp = "/Users/nikikotecha/ray_results/PPO/PPO_MultiAgentInvManagementDiv_82dea_00000_0_2023-11-21_19-23-55/checkpoint_000060" #marl_opt num 2 
 single_agent = "/Users/nikikotecha/ray_results/PPO/PPO_MultiAgentInvManagementDiv_03040_00000_0_2023-11-22_17-24-37/checkpoint_000060"
 marl_opt = "/Users/nikikotecha/ray_results/PPO/PPO_MultiAgentInvManagementDiv_e11c4_00000_0_2023-11-21_22-25-30/checkpoint_000060"
-trained_policy_single = Algorithm.from_checkpoint(single_agent)
-trained_policy_multi = Algorithm.from_checkpoint(marl_opt)
+#trained_policy_single = Algorithm.from_checkpoint(single_agent)
+#trained_policy_multi = Algorithm.from_checkpoint(marl_opt)
 or_policy = "/Users/nikikotecha/ray_results/PPO/PPO_MultiAgentInvManagementDiv_e41a5_00000_0_2023-11-29_14-30-49/checkpoint_000060"
 #OR = "/Users/nikikotecha/ray_results/PPO/PPO_MultiAgentInvManagementDiv1_658b6_00000_0_2023-11-30_13-28-50/checkpoint_000002"
 OR = "/Users/nikikotecha/ray_results/PPO/PPO_MultiAgentInvManagementDiv1_fa9c5_00000_0_2023-12-06_11-09-52/checkpoint_000060"
@@ -62,7 +62,7 @@ OR = "/Users/nikikotecha/ray_results/PPO/PPO_MultiAgentInvManagementDiv1_fa9c5_0
 #gor = '/Users/nikikotecha/ray_results/PPO/PPO_MultiAgentInvManagementDiv1_07f5a_00000_0_2023-12-07_12-42-07/checkpoint_000060'
 #trained_policy_gor = Algorithm.from_checkpoint(gor)
 gnn = "/Users/nikikotecha/ray_results/PPO/PPO_MultiAgentInvManagementDiv_a0efc_00000_0_2023-12-01_11-34-46/checkpoint_000060"
-gnn_policy = Algorithm.from_checkpoint(gnn)
+#gnn_policy = Algorithm.from_checkpoint(gnn)
 gnn2 = "/Users/nikikotecha/ray_results/PPO/PPO_MultiAgentInvManagementDiv_d8e44_00000_0_2023-12-01_15-46-52/checkpoint_000060"
 #gnn2_policy = Algorithm.from_checkpoint(gnn2)
 gss3= "/Users/nikikotecha/ray_results/PPO/PPO_MultiAgentInvManagementDiv_a1f97_00000_0_2023-12-11_13-53-16/checkpoint_000060"
@@ -71,6 +71,14 @@ gss4 = "/Users/nikikotecha/ray_results/PPO/PPO_MultiAgentInvManagementDiv_77f3d_
 #trained_policy_gss4 = Algorithm.from_checkpoint(gss4)
 gss5 = "/Users/nikikotecha/ray_results/PPO/PPO_MultiAgentInvManagementDiv_bf9cf_00000_0_2023-12-14_13-36-13/checkpoint_000060"
 #trained_policy_gss5 = Algorithm.from_checkpoint(gss5)
+
+ng1 =  r"C:\Users\nk3118/ray_results\PPO_MultiAgentInvManagementDiv_2024-02-07_11-56-05zpasv7px\checkpoint_000060"
+ng1p = Algorithm.from_checkpoint(ng1)
+ng2 =  r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-02-14_17-31-39a0c4zn9f\checkpoint_000060"
+ng2p = Algorithm.from_checkpoint(ng2)
+g1 =  r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-02-14_14-01-01fcmfw_2i\checkpoint_000060"
+g1p = Algorithm.from_checkpoint(g1)
+
 """algo_config= (
     PPOConfig()
     .environment(
@@ -167,14 +175,16 @@ def average_simulation(num_runs,
 
 
 
-av_infos, av_profits, av_backlog, av_inv, av_or, av_demand, av_s1, av_s2 = average_simulation(num_runs, trained_policy=trained_policy_single, num_periods_=50, env=env_SS)
-mav_infos, mav_profits, mav_backlog, mav_inv, mav_or, mav_demand, mav_s1, mav_s2 = average_simulation(num_runs, trained_policy=trained_policy_multi, num_periods_=50, env=env_SS)
+av_infos, av_profits, av_backlog, av_inv, av_or, av_demand, av_s1, av_s2 = average_simulation(num_runs, trained_policy=ng1p, num_periods_=50, env=env_SS)
+mav_infos, mav_profits, mav_backlog, mav_inv, mav_or, mav_demand, mav_s1, mav_s2 = average_simulation(num_runs, trained_policy=ng2p, num_periods_=50, env=env_SS)
+gav_infos, gmav_profits, gmav_backlog, gmav_inv, gmav_or, gmav_demand, gmav_s1, gmav_s2 = average_simulation(num_runs, trained_policy=g1p, num_periods_=50, env=env_SS)
+
 #gav_infos, gav_profits, gav_backlog, gav_inv, gav_or, gav_demand, gav_s1, gav_s2 = average_simulation(num_runs, trained_policy=gnn_policy, num_periods_=50, env=env_SS)
 #goav_infos, goav_profits, goav_backlog, goav_inv, goav_or, goav_demand, goav_s1, goav_s2 = average_simulation(num_runs, trained_policy=trained_policy_or, num_periods_=50, env=env_OR)
 
 profit_data = {"av_profits": av_profits, 
                "mav_profits": mav_profits,
-               #"gav_profits": gav_profits,
+               "gmav_profits": gmav_profits,
                #"goav_profits": goav_profits
                 }
 
@@ -186,29 +196,29 @@ absolute_path = os.path.abspath(output_file)
 print(f"The JSON file is saved at: {absolute_path}")
 
 #all nodes e.g. profit
-def process_all_nodes_data(av_profits1, av_profits2, config):
+def process_all_nodes_data(av_profits1, av_profits2, av_profits3, config):
     average_profit_list1  = np.mean(av_profits1, axis =0)
     std_profit_list1 = np.std(av_profits1, axis=0)
     average_profit_list2 = np.mean(av_profits2, axis=0)
     std_profit_list2 = np.std(av_profits2, axis =0)
-    """    average_profit_list3 = np.mean(av_profits3, axis=0)
-        std_profit_list3 = np.std(av_profits2, axis =0)
-        average_profit_list4 = np.mean(av_profits4, axis=0)
+    average_profit_list3 = np.mean(av_profits3, axis=0)
+    std_profit_list3 = np.std(av_profits2, axis =0)
+    """    average_profit_list4 = np.mean(av_profits4, axis=0)
         std_profit_list4 = np.std(av_profits4, axis =0)"""
 
     cumulative_profit_list1 = np.cumsum(average_profit_list1, axis =0)  # Calculate cumulative profit
     cumulative_profit_list2 = np.cumsum(average_profit_list2, axis = 0)
-    """    cumulative_profit_list3 = np.cumsum(average_profit_list3, axis = 0)
-        cumulative_profit_list4 = np.cumsum(average_profit_list4, axis = 0)"""
+    cumulative_profit_list3 = np.cumsum(average_profit_list3, axis = 0)
+    """        cumulative_profit_list4 = np.cumsum(average_profit_list4, axis = 0)"""
 
     period = range(1, len(average_profit_list1)+1)
     plt.figure()
-    plt.plot(period, cumulative_profit_list1, label = "Single Agent", color = 'red', linestyle = 'solid')
+    plt.plot(period, cumulative_profit_list1, label = "ng1", color = 'red', linestyle = 'solid')
     plt.fill_between(period, cumulative_profit_list1 + std_profit_list1, cumulative_profit_list1 - std_profit_list1, color = 'red', alpha = 0.5)
-    plt.plot(period, cumulative_profit_list2, label = "Multi Agent", color = 'blue', linestyle = 'dashed')
+    plt.plot(period, cumulative_profit_list2, label = "ng2", color = 'blue', linestyle = 'dashed')
     plt.fill_between(period, cumulative_profit_list2 + std_profit_list2, cumulative_profit_list2 - std_profit_list2, color = 'blue', alpha = 0.5)
-    """plt.plot(period, cumulative_profit_list3, label = "Graph Multi Agent", color = 'green', linestyle = 'solid')
-    plt.fill_between(period, cumulative_profit_list3 + std_profit_list3, cumulative_profit_list3 - std_profit_list3, color = 'green', alpha = 0.5)
+    plt.plot(period, cumulative_profit_list3, label = "g1", color = 'green', linestyle = 'solid')
+    """plt.fill_between(period, cumulative_profit_list3 + std_profit_list3, cumulative_profit_list3 - std_profit_list3, color = 'green', alpha = 0.5)
     plt.plot(period, cumulative_profit_list4, label = "Multi Agent OR", color = 'orange', linestyle = 'solid')
     plt.fill_between(period, cumulative_profit_list4 + std_profit_list4, cumulative_profit_list4 - std_profit_list4, color = 'orange', alpha = 0.5)"""
 
@@ -222,6 +232,8 @@ def process_all_nodes_data(av_profits1, av_profits2, config):
     plt.legend()
     plt.show()
 
+process_all_nodes_data(av_profits, mav_profits, gmav_profits)
+
 def process_all_nodes_data_from_file(file_path, config):
     with open(file_path, 'r') as file:
         data = json.load(file)
@@ -233,7 +245,7 @@ def process_all_nodes_data_from_file(file_path, config):
 
     process_all_nodes_data(av_profits, mav_profits, config)
 
-process_all_nodes_data_from_file(output_file, config)
+#process_all_nodes_data_from_file(output_file, config)
 
 #individual nodes e.g. backlog
 def process_ind_nodes_data(av_backlog, num_runs, config):

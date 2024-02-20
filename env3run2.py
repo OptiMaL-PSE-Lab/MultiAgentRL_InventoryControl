@@ -10,8 +10,7 @@ from scipy.stats import poisson, randint
 """
 This environment is for a multi product, multi echelon supply chain 
 action space is (2,) defined as s and S parameters 
-"""
-
+"""            
 def create_network(connections):
     num_nodes = max(connections.keys())
     network = np.zeros((num_nodes + 1, num_nodes + 1))
@@ -64,9 +63,9 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
 
         # Structure
         self.num_products = config.get("num_products",2)
-        self.num_nodes = config.get("num_nodes", 12)
+        self.num_nodes = config.get("num_nodes", 6)
 
-        self.connections = config.get("connections", {0: [1], 1:[2], 2:[3], 3:[4], 4:[5], 5:[6], 6:[7], 7:[8], 8:[9], 9:[10], 10:[11], 11:[]})
+        self.connections = config.get("connections", {0: [1], 1:[2], 2:[3], 3:[4], 4:[5], 5:[]})
         self.network = create_network(self.connections)
         self.order_network = np.transpose(self.network)
         self.retailers = get_retailers(self.network)
@@ -89,7 +88,7 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
         self.num_stages = get_stage(node=int(self.num_nodes - 1), network=self.network) + 1 
         self.a = config.get("a", -1)
         self.b = config.get("b", 1)
-
+        
         self.num_agents = config.get("num_agents", self.num_nodes * self.num_products)
         self.inv_init = config.get("init_inv", np.ones((self.num_nodes, self.num_products))*30)
         self.inv_target = config.get("inv_target", np.ones((self.num_nodes, self.num_products)) * 1)

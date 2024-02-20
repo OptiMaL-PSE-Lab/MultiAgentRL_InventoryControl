@@ -12,7 +12,7 @@ import time
 from ray.rllib.algorithms.ppo import PPOConfig
 import json 
 from ray.rllib.policy.policy import PolicySpec #For policy mapping
-from model import GNNActorCriticModel, GNNActorCriticModelPool
+from model import GNNActorCriticModel
 from ray.rllib.algorithms.callbacks import DefaultCallbacks
 from ray.rllib.policy.sample_batch import SampleBatch
 from ccmodel import FillInActions
@@ -23,15 +23,15 @@ def ensure_dir(file_path):
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-ModelCatalog.register_custom_model("gnn_model", GNNActorCriticModelPool)
+ModelCatalog.register_custom_model("gnn_model", GNNActorCriticModel)
 #import ray.rllib.algorithms
 #from ray.rllib.algorithms.maddpg.maddpg import MADDPGConfig
 ray.shutdown()
 ray.init(log_to_driver= False)
 
-config = {"connections":{0: [1], 1:[2], 2:[3], 3:[4], 4:[5], 5:[6], 6:[7], 7:[8], 8:[9], 9:[10], 10:[11], 11:[]},
+config = {"connections":{0: [1], 1:[2], 2:[3], 3:[4], 4:[5], 5:[]},
           "num_products":2, 
-          "num_nodes":12}
+          "num_nodes":6}
 
 num_agents= config["num_nodes"] * config["num_products"]
 num_products = config["num_products"]
@@ -174,7 +174,8 @@ algo_w_5_policies = (
     .build()
 )
 
-iterations = 60
+algo_w_5_policies.restore(r"c:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-02-15_11-17-17ckbvo_zj\checkpoint_000008")
+iterations = 60-8
 for i in range(iterations):
     algo_w_5_policies.train()
     path_to_checkpoint = algo_w_5_policies.save()

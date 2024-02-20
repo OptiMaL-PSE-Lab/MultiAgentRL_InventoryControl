@@ -7,33 +7,45 @@ todo: add checkpoint to the runn.py file so you can access the compute_action me
 will need to restore the checkpoint on here 
 '''
 
-r_3n2p = [
+ng1_3n2p = [
     r"C:\Users\nk3118/ray_results\PPO_MultiAgentInvManagementDiv_2024-02-07_11-56-05zpasv7px\result.json",
     r"C:\Users\nk3118/ray_results\PPO_MultiAgentInvManagementDiv_2024-02-07_11-58-32ffzoj9sm\result.json",
     r"C:\Users\nk3118/ray_results\PPO_MultiAgentInvManagementDiv_2024-02-07_12-01-076mbux2kk\result.json"
 ]
 
-r_6n2p = [
+ng1_6n2p = [
     r"C:\Users\nk3118/ray_results\PPO_MultiAgentInvManagementDiv_2024-02-06_14-44-053nyf2_uz\result.json",
 r"C:\Users\nk3118/ray_results\PPO_MultiAgentInvManagementDiv_2024-02-06_14-51-29zpqpq7tt\result.json",
 r"C:\Users\nk3118/ray_results\PPO_MultiAgentInvManagementDiv_2024-02-06_15-05-47hm60m7n8\result.json",
 ]
 
-r_12n2p = [
+ng1_12n2p = [
     r"C:\Users\nk3118/ray_results\PPO_MultiAgentInvManagementDiv_2024-02-07_13-35-30e87zubfu\result.json",
 r"C:\Users\nk3118/ray_results\PPO_MultiAgentInvManagementDiv_2024-02-07_13-39-20d38mqks0\result.json",
 r"C:\Users\nk3118/ray_results\PPO_MultiAgentInvManagementDiv_2024-02-07_13-44-47hj9dvneu\result.json",
 ]
 
-r_3n4p = [
+ng1_3n4p = [
     r"C:\Users\nk3118/ray_results\PPO_MultiAgentInvManagementDiv_2024-02-07_18-59-03ef41kyhv\result.json",
 r"C:\Users\nk3118/ray_results\PPO_MultiAgentInvManagementDiv_2024-02-07_18-59-36d1eopod3\result.json",
 r"C:\Users\nk3118/ray_results\PPO_MultiAgentInvManagementDiv_2024-02-07_18-59-457tnpdc9p\result.json",
 ]
 
+ng2_3n2p = [
+    r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-02-14_17-31-39a0c4zn9f\result.json",
+r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-02-14_17-39-58jcz3bfq6\result.json",
+r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-02-14_20-07-33jjinsoss\result.json",
+
+]
+g1_3n2p = [
+    r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-02-14_14-01-01fcmfw_2i\result.json",
+r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-02-14_14-00-29pje09paj\result.json",
+r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-02-14_13-58-25n4fwicdl\result.json",
+]
+
 iteration_to_check = 60
-file_paths = [r_3n2p, r_6n2p, r_12n2p, r_3n4p]
-number_agents = [6, 12, 24, 12]
+file_paths = [ng1_3n2p, ng2_3n2p, g1_3n2p]
+number_agents = [1,1,1]
 
 
 def normalize_rewards(rewards, num_agents):
@@ -49,7 +61,7 @@ def normalize_rewards2(rewards):
 def training_figures(file_paths_list, iteration_to_check, number_agents):
     plt.figure(figsize=(8, 6))
 
-    for file_paths , label, no_agent in zip(file_paths_list, ['r_3n2p', 'r_6n2p', 'r_12n2p', 'G2'], number_agents):
+    for file_paths , label, no_agent in zip(file_paths_list, ['ng1_3n2p', 'ng2_3n2p', 'g1_3n2p'], number_agents):
         all_rewards = []
 
         for path in file_paths:
@@ -66,8 +78,8 @@ def training_figures(file_paths_list, iteration_to_check, number_agents):
             for result in results_list:
                 episode_reward_mean.append(result['episode_reward_mean'])
 
-            #normalized_rewards = normalize_rewards(episode_reward_mean, no_agent)
-            normalized_rewards = normalize_rewards2(episode_reward_mean)
+            normalized_rewards = normalize_rewards(episode_reward_mean, no_agent)
+            #normalized_rewards = normalize_rewards2(episode_reward_mean)
             all_rewards.append(normalized_rewards)
 
 

@@ -12,7 +12,7 @@ import time
 from ray.rllib.algorithms.ppo import PPOConfig
 import json 
 from ray.rllib.policy.policy import PolicySpec #For policy mapping
-from model import GNNActorCriticModel, GNNActorCriticModelPool
+from modelpool import GNNActorCriticModel
 from ray.rllib.algorithms.callbacks import DefaultCallbacks
 from ray.rllib.policy.sample_batch import SampleBatch
 from ccmodel import FillInActions
@@ -23,7 +23,7 @@ def ensure_dir(file_path):
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-ModelCatalog.register_custom_model("gnn_model", GNNActorCriticModelPool)
+ModelCatalog.register_custom_model("gnn_model", GNNActorCriticModel)
 #import ray.rllib.algorithms
 #from ray.rllib.algorithms.maddpg.maddpg import MADDPGConfig
 ray.shutdown()
