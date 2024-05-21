@@ -39,25 +39,24 @@ class GNNLayer(nn.Module):
 
         return x
 
-class GNNActorCriticModel(TorchModelV2, nn.Module):
+class GNNActorCriticModelPool(TorchModelV2, nn.Module):
     def __init__(self, obs_space, action_space, num_outputs, model_config, name):
         TorchModelV2.__init__(self, obs_space, action_space, num_outputs, model_config, name)
         nn.Module.__init__(self)
-        state_dim = 240
+        state_dim = 10
         message_dim = 10  
-        gnn_input = 240
         # GNN for message passing [input, output]
         self.gnn = GNNLayer(10, message_dim)
         # Actor: Neural network for policy
         self.actor = FullyConnectedNetwork(
             Box(
-                low = -np.ones(state_dim + message_dim),
-                high = np.ones(state_dim + message_dim),
+                low = -np.ones(state_dim ),
+                high = np.ones(state_dim ),
                 dtype = np.float64,
-                shape = (state_dim + message_dim,)), 
+                shape = (state_dim ,)), 
                 action_space, num_outputs, model_config, name + '_action')
         # Critic: Neural network for state-value estimation
-        input_shape_after_pooling = [32, 10]
+
 
         self.critic = FullyConnectedNetwork(
              Box(
@@ -72,48 +71,15 @@ class GNNActorCriticModel(TorchModelV2, nn.Module):
     def forward(self, input_dict, state, seq_lens):
         
         self._model_in = [input_dict["obs_flat"], state, seq_lens]
+        connections = {0: [1,2], 1:[3,4], 2:[4, 5], 3:[], 4:[], 5:[]}
 
-        #statetensor = input_dict["obs"]["own_obs"]
-        #state_tensor = statetensor.unsqueeze(1)
-        #opponent_obs = input_dict["obs"]["opponent_obs"].reshape(32,5,10)
-        #node_features_concat = torch.cat((state_tensor, opponent_obs), dim = 1)
-        """
-        adjacency_matrix = [
-            [0, 0, 1, 1, 0, 0],
-            [0, 0, 1, 1, 0, 0],
-            [0, 0, 0, 0, 1, 1],
-            [0, 0, 0, 0, 1, 1],
-            [0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0]
-        ]
-        """
-        adjacency_matrix = [
-            [0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-            [0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-            [0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-            [0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-            [0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-            [0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-            [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-            [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0 ],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0 ],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0 ],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0 ],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0 ],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0 ],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0 ],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0 ],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1 ],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1 ],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]
-        ]
-
+        num_nodes = max(connections.keys()) + 1
+        network = np.zeros((num_nodes , num_nodes ))
+        for parent, children in connections.items():
+            if children:
+                for child in children:
+                    network[parent][child] = 1
+        adjacency_matrix = network
         # Convert it to a PyTorch tensor
         adj_t = torch.tensor(adjacency_matrix)
 
@@ -126,10 +92,10 @@ class GNNActorCriticModel(TorchModelV2, nn.Module):
         x = torch.cat((input_dict["obs"]["own_obs"], input_dict["obs"]["opponent_obs"]), dim=1)
 
         if input_dict["obs"]["own_obs"].shape[0] == 32:
-            x = x.view(32, 24, 10)
+            x = x.view(32, num_nodes, 10)
         else:
             dim = input_dict["obs"]["own_obs"].shape[0]
-            x = x.view(dim, 24, 10)
+            x = x.view(dim, num_nodes, 10)
 
         if input_dict["obs"]["own_obs"].shape[0] == 32:
             data = Data (x = x, edge_index=batch_edge_index)
@@ -137,22 +103,15 @@ class GNNActorCriticModel(TorchModelV2, nn.Module):
             data = Data(x = x, edge_index = edge_index_single)
 
         message = self.gnn(data)
-        print("message size", message.shape, message.type)
         message_size = message.size()
         seqlens = int(message_size[0])
-        print("seqlens", seqlens)
         numagents = int(message_size[1])
-        print("num agents", numagents)
         num_nodes_per_graph = [numagents] * seqlens
         batch_index = torch.cat([torch.full((num,), i, dtype=torch.long) for i, num in enumerate(num_nodes_per_graph)]) 
         # batch_index = torch.arange(seqlens).view(-1, 1).expand(-1, num_nodes_per_graph).contiguous().view(-1)
         message_pool = message.view(-1, message.shape[-1])
-        print("reshaped message size", message_pool.shape)
-
-        print("batch index", batch_index.shape, batch_index.type, batch_index)
         pool = global_mean_pool(message_pool, batch_index)
 
-        print ("pool size", pool.shape, pool.type )
         self.pool = pool 
 
         
@@ -169,7 +128,7 @@ class GNNActorCriticModel(TorchModelV2, nn.Module):
         # Critic: Estimate state value
         #value = self.critic({"obs": state_tensor}, state, seq_lens)
 
-        actor_input = torch.cat((input_dict["obs"]["own_obs"], message), dim = 1)
+        actor_input = input_dict["obs"]["own_obs"]
         #print("actor input shape", actor_input.shape)
 
         return self.actor({
@@ -181,5 +140,8 @@ class GNNActorCriticModel(TorchModelV2, nn.Module):
         value_out, _ = self.critic({
             "obs": self.pool
         }, self._model_in[1], self._model_in[2])
+
+        noise = torch.randn_like(value_out) * 0.2  # Gaussian noise with mean 0 and std 0.1
+        value_out += noise
 
         return torch.reshape(value_out, [-1])

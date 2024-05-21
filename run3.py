@@ -15,40 +15,26 @@ from ray.rllib.policy.policy import Policy
 import time 
 from ray.rllib.algorithms.ppo import PPOConfig
 import json 
-from ray.rllib.policy.policy import PolicySpec #For policy mapping
-#from model import GNNActorCriticModel
 
-config = {"connections":{0: [1], 1:[2], 2:[]},
-          "num_products":8, 
-          "num_nodes":3}
-#{0: [1,2], 1:[3,4,5], 2:[3,4,5], 3:[], 4:[], 5:[]}
+config = {"connections":{0: [1], 1:[2], 2:[3], 3:[4], 4:[5], 5:[6], 6:[7], 7:[8], 8:[9], 9:[10], 10:[11], 11:[12], 12:[13], 13:[14], 14:[15], 15:[]},
+          "num_products":2, 
+          "num_nodes":16}
+
+num_agents= config["num_nodes"] * config["num_products"]
+num_products = config["num_products"]
+num_nodes = config["num_nodes"]
+
 def ensure_dir(file_path):
     directory = os.path.dirname(file_path)
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-#ModelCatalog.register_custom_model("gnn_model", GNNActorCriticModel)
-#import ray.rllib.algorithms
-#from ray.rllib.algorithms.maddpg.maddpg import MADDPGConfig
 ray.shutdown()
-ray.init(resources={"CUSTOM_RESOURCE":100}, log_to_driver= False)
-
-#todo - create centralised critic model class in models.py file 
-
-
-num_nodes = config["num_nodes"]
-num_periods = 2
-num_products = config["num_products"]
+ray.init(log_to_driver= False)
 
 # Set script seed
 SEED = 52
 np.random.seed(seed=SEED)
-
-"""# Agent/Policy ids
-agent_ids = []
-for i in range(num_nodes * num_products):
-    agent_id = "node_" + str(i)
-    agent_ids.append(agent_id)"""
 
 # Test environment
 test_env = MultiAgentInvManagementDiv(config)
@@ -56,8 +42,6 @@ obs_space = test_env.observation_space
 print("obs space",obs_space)
 act_space = test_env.action_space
 print(act_space)
-num_agents = test_env.num_agents
-print(num_agents)
 size = obs_space.shape[0]
 size_action = act_space.shape[0]
 
@@ -70,21 +54,13 @@ opponent_act_space = Box(
 low = np.tile(act_space.low, (num_agents -1)), 
 high = np.tile(act_space.high, (num_agents -1))
 )
-"""opponent_act_space = Box(low=np.tile(act_space.low, num_agents-1), 
-                        high=np.tile(act_space.high, num_agents-1),
-                         dtype=np.float64, shape=(act_space.shape[0]*(num_agents-1),))
-"""
-print(type(obs_space))
-print(type(opponent_act_space))
-print(type(opponent_act_space))
+
 
 cc_obs_space = Dict({
         "own_obs": obs_space,
         "opponent_obs": opponent_obs_space,
         "opponent_action": opponent_act_space,
     })
-
-print(cc_obs_space)
 
 
 def create_network(connections):
@@ -130,10 +106,6 @@ for i in range(num_agents):
     policy_graphs[agent_ids[i]] = None, cc_obs_space, act_space, {}
 
 
-def policy_dict():
-    return {f"{agent_id}": PolicySpec() for agent_id in agent_ids}
-
-print("PG Keys", policy_graphs.keys())
 
 def policy_mapping_fn(agent_id, episode, worker, **kwargs):
     '''Maps each Agent's ID with a different policy. So each agent is trained with a diff policy.'''
@@ -165,7 +137,8 @@ def central_critic_observer(agent_obs, **kw):
         new_obs[agent] = dict()
         new_obs[agent]["own_obs"] = agent_obs[agent]
         new_obs[agent]["opponent_obs"] = np.zeros((num_agents - 1)*obs_space)
-        new_obs[agent]["opponent_action"] = np.zeros((num_agents - 1))
+        new_obs[agent]["opponent_action"] = np.zeros(2*(num_agents - 1))
+        #2* as our action space for each agent is (2,)
         i = 0
         for other_agent in agents:
             if agent != other_agent:
@@ -174,12 +147,6 @@ def central_critic_observer(agent_obs, **kw):
                 i += 1
 
     return new_obs
-
-#def model_creator():
-#    model = GNNCentralizedCriticModel(obs_space = obs_space, action_space = act_space, \
-#                num_outputs = 2, model_config = model_config, name=None, state = state)
-#    return model
-
 
 
 # Register environment
@@ -197,16 +164,22 @@ algo_w_5_policies = (
             "num_agents": num_agents,
         },
     )
+    .rollouts(
+        batch_mode="complete_episodes",
+            num_rollout_workers=0,
+            # TODO(avnishn) make a new example compatible w connectors.
+            enable_connectors=False,)
+    .training(
+    )
     .multi_agent(
-        policies= policy_dict(),
+        policies= policy_graphs,
         # Map "agent0" -> "pol0", etc...
         policy_mapping_fn=(
             lambda agent_id, episode, worker, **kwargs: (
         print(f"Agent ID: {agent_id}"),
         str(agent_id)
     )[1]
-    )
-    )
+    ))
     .build()
 )
 iterations = 60

@@ -1,4 +1,4 @@
-from env3run import MultiAgentInvManagementDiv
+from env3rundiv import MultiAgentInvManagementDiv
 import gymnasium as gym
 from gymnasium.spaces import Dict, Box, Discrete
 import numpy as np 
@@ -12,7 +12,7 @@ import time
 from ray.rllib.algorithms.ppo import PPOConfig
 import json 
 from ray.rllib.policy.policy import PolicySpec #For policy mapping
-from model import GNNActorCriticModel, GNNActorCriticModelPool
+from model import GNNActorCriticModel
 from ray.rllib.algorithms.callbacks import DefaultCallbacks
 from ray.rllib.policy.sample_batch import SampleBatch
 from ccmodel import FillInActions
@@ -23,19 +23,21 @@ def ensure_dir(file_path):
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-ModelCatalog.register_custom_model("gnn_model", GNNActorCriticModelPool)
+ModelCatalog.register_custom_model("gnn_model", GNNActorCriticModel)
 #import ray.rllib.algorithms
 #from ray.rllib.algorithms.maddpg.maddpg import MADDPGConfig
 ray.shutdown()
-ray.init(log_to_driver= False)
+ray.init()
 
-config = {"connections":{0: [1], 1:[2], 2:[3], 3:[4], 4:[5], 5:[6], 6:[7], 7:[8], 8:[9], 9:[10], 10:[11], 11:[]},
-          "num_products":2, 
-          "num_nodes":12}
 
-num_agents= config["num_nodes"] * config["num_products"]
-num_products = config["num_products"]
+config = {"connections": {0: [1,2], 1:[3,4], 2:[4, 5], 3:[], 4:[], 5:[]}, 
+          #"num_products":2, 
+          "num_nodes": 6}
+
+#num_agents= config["num_nodes"] * config["num_products"]
+#num_products = config["num_products"]
 num_nodes = config["num_nodes"]
+num_agents = num_nodes
 
 def central_critic_observer(agent_obs, **kw):
     """Rewrites the agent obs to include opponent data for training."""
@@ -49,8 +51,6 @@ def central_critic_observer(agent_obs, **kw):
         new_obs[agent]["own_obs"] = agent_obs[agent]
         new_obs[agent]["opponent_obs"] = np.zeros((num_agents - 1)*obs_space)
         new_obs[agent]["opponent_action"] = np.zeros(2*(num_agents - 1))
-        print("cc observer opponent action",new_obs[agent]["opponent_action"].shape)
-        print("cc observer opponent num agents",num_agents)
         i = 0
         for other_agent in agents:
             if agent != other_agent:
@@ -113,8 +113,8 @@ network = create_network(config["connections"])
 echelons = {node: get_stage(node, network) for node in range(len(network))}
 
 agent_ids = []
-agent_ids = [f"{echelons[node]}_{node:02d}_{product}" for node in range(len(network)) for product in range(num_products)]
-
+#agent_ids = [f"{echelons[node]}_{node:02d}_{product}" for node in range(len(network)) for product in range(num_products)]
+agent_ids = [f"{echelons[node]}_{node:02d}" for node in range(len(network))]
 
 def policy_dict():
     return {f"{agent_id}": PolicySpec() for agent_id in agent_ids}
@@ -147,7 +147,7 @@ algo_w_5_policies = (
     .environment(
         env= "MultiAgentInvManagementDiv",
         env_config={
-            "num_agents": 12,
+            "num_agents": num_agents,
         },
     )
     .rollouts(
@@ -173,7 +173,6 @@ algo_w_5_policies = (
     )
     .build()
 )
-
 iterations = 60
 for i in range(iterations):
     algo_w_5_policies.train()

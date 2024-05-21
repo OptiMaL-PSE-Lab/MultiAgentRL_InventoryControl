@@ -54,6 +54,9 @@ class CentralisedCriticModel(TorchModelV2, nn.Module):
             "obs": self._model_in[0]
         }, self._model_in[1], self._model_in[2])
 
+        noise = torch.randn_like(value_out) * 0.2  # Gaussian noise with mean 0 and std 0.1
+        value_out += noise
+
         return torch.reshape(value_out, [-1])
 
 
