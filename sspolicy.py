@@ -10,11 +10,9 @@ def ss_policy(reorder_point, order_up_to, env):
     below the reorder point s, we will re-order inventory to
     bring it to the order-up-to level S.
     '''
-    print('period', env.period)
     inv_ech = env.inv[env.period, :] 
 
     orders_needed = np.where(inv_ech <= reorder_point, order_up_to - inv_ech, 0)
-    print('orders_needed',inv_ech, reorder_point, order_up_to, orders_needed)
     # Ensure that actions can be fulfilled by checking constraints
     actions = np.minimum(env.order_max, orders_needed)
     return actions
@@ -41,11 +39,9 @@ def dfo_func(policy, env, demand=None, *args):
     rewards = np.array(rewards)
     prob = env.dist.pmf(env.customer_demand, **env.dist_param)
     
-    # Return negative of expected profit
-    return np.sum(rewards)
-    #return np.sum(rewards)
+    return -np.sum(rewards)
 
-def optimize_inventory_policy(env, fun, init_policy=None, method='BFGS', demand=None):
+def optimize_inventory_policy(env, fun, init_policy, method, demand):
     if init_policy is None:
         init_policy = np.concatenate([np.ones(env.num_nodes) * (env.mu - env.sigma), 
                                       np.ones(env.num_nodes) * (env.mu + env.sigma)])

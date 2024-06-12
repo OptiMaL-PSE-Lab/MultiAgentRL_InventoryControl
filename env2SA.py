@@ -60,8 +60,8 @@ class InvManagementDiv(gym.Env):
         self.num_periods = config.get("num_periods", 50)
 
         # Structure
-        self.num_nodes = config.get("num_nodes", 18)
-        self.connections = config.get("connections", {0: [1,2], 1:[3,4], 2:[5,6], 3:[7,8], 4:[9], 5:[10], 6:[], 7:[11,12,13], 8:[12], 9:[14], 10:[15], 11:[16, 17], 12:[], 13:[17], 14:[17], 15:[], 16:[], 17:[]})
+        self.num_nodes = config.get("num_nodes", 24)
+        self.connections = config.get("connections", {0: [1,2], 1:[3,4], 2:[5,6], 3:[7,8], 4:[9], 5:[10,11], 6:[12], 7:[], 8:[13,14], 9:[14], 10:[15,16], 11:[17,18], 12:[18,19], 13:[], 14:[20], 15:[20], 16:[21], 17:[21,22], 18:[], 19:[23], 20:[], 21:[], 22:[], 23:[]})
         self.network = create_network(self.connections)
         self.order_network = np.transpose(self.network)
         self.retailers = get_retailers(self.network)
@@ -105,7 +105,7 @@ class InvManagementDiv(gym.Env):
         self.node_price = np.zeros(self.num_nodes)
         self.node_cost = np.zeros(self.num_nodes)
         for i in range(self.num_nodes):
-            self.node_price[i] = 2 * stage_price[get_stage(i, self.network)]
+            self.node_price[i] = 2.6 * stage_price[get_stage(i, self.network)]
             self.node_cost[i] = 0.5 * stage_cost[get_stage(i, self.network)]
 
         # Stock Holding and Backlog cost
@@ -281,7 +281,6 @@ class InvManagementDiv(gym.Env):
                 self.dist = poisson
                 self.dist_param = {'mu': self.mu}
                 self.customer_demand = self.dist.rvs(size=(len(self.retailers), self.num_periods), **self.dist_param)
-                print('customer demand',self.customer_demand)
             # Uniform distribution
             elif self.demand_dist == "uniform":
                 lower_upper = self.config.get("lower_upper", (1, 5))
@@ -605,7 +604,7 @@ class InvManagementDiv(gym.Env):
         t = self.period
         profit = self.node_price * self.ship[t, :] - self.node_cost * self.order_r[t, :] \
             - self.stock_cost * np.abs(self.inv[t + 1, :] - self.inv_target)\
-            - self.backlog_cost * self.backlog[t + 1, :]
+            - self.backlog_cost * np.abs(self.backlog[t + 1, :])
 
         reward = - self.stock_cost * np.abs(self.inv[t + 1, :] - self.inv_target) \
                  - self.backlog_cost * self.backlog[t + 1, :]
