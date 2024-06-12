@@ -15,15 +15,16 @@ test_demand = env.dist.rvs(size=(num_tests, (len(env.retailers)), env.num_period
 
 #DFO 
 init_policy = np.ones(env.num_nodes * 2) 
-init_policy[:env.num_nodes] *=5
-init_policy[env.num_nodes:] *=30
+init_policy[:env.num_nodes] *=10
+init_policy[env.num_nodes:] *=70
 
 print("Initial policy: {}".format(init_policy))
 print(test_demand[0,:])
-policy, out = optimize_inventory_policy(env, dfo_func, init_policy = init_policy ,method='BFGS', demand=test_demand[0,:])
+policy, out = optimize_inventory_policy(env, dfo_func, init_policy = init_policy ,method='Powell', demand=test_demand[0,:])
 print("Re-order levels, s: {}".format(policy[:env.num_nodes]))
 print("Order up to levels, S: {}".format(policy[env.num_nodes:]))
 print("DFO Info:\n{}".format(out))
+
 
 dfo_rewards = []
 backlog_values = [] 
@@ -40,7 +41,7 @@ for i in range(20):
         s, r, done, info = env.step(dfo_action)
         b = info['backlog'] 
         i = info['inv']
-        dfo_reward += -r
+        dfo_reward += r
         if done: # if the episode is done 
             backlog_values.append(b)
             inv_values.append(i)

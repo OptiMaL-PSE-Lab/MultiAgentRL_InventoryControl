@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import json
 
-#plt.rcParams['text.usetex'] = True
+plt.rcParams['text.usetex'] = True
 
 ippo18 = r"ng1_18.json"
 mappo18 = r"ng2_18.json" 
