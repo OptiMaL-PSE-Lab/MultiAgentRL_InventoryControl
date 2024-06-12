@@ -1,3 +1,4 @@
+from pickle import FALSE
 from ray.rllib.env.multi_agent_env import MultiAgentEnv
 import copy
 import gymnasium as gym
@@ -64,9 +65,9 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
 
         # Structure
         self.num_products = config.get("num_products",2)
-        self.num_nodes = config.get("num_nodes", 12)
+        self.num_nodes = config.get("num_nodes", 3)
 
-        self.connections = config.get("connections", {0: [1], 1:[2], 2:[3], 3:[4], 4:[5], 5:[6], 6:[7], 7:[8], 8:[9], 9:[10], 10:[11], 11:[]})
+        self.connections = config.get("connections",{0: [1], 1:[2], 2:[]})
         self.network = create_network(self.connections)
         self.order_network = np.transpose(self.network)
         self.retailers = get_retailers(self.network)
@@ -96,7 +97,7 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
         self.prev_actions = config.get("prev_actions", True)
         self.prev_demand = config.get("prev_demand", True)
         self.prev_length = config.get("prev_length", 1)
-        delay_init = np.array([1,2,3,1,1,2,1,1,2,3,4,5])
+        delay_init = np.array([1,2,3,1,1,2,1,1,2,3,4,5,1,2,1,1,1,1,1,1,1,1,2,1,2])
         self.delay = delay_init
         self.max_delay = np.max(self.delay)
 
@@ -124,7 +125,7 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
         # Stock Holding and Backlog cost
         self.stock_cost = config.get("stock_cost", np.ones((self.num_nodes, self.num_products)))
         self.backlog_cost = config.get("backlog_cost", np.ones((self.num_nodes, self.num_products))*2.5) #this was x2 during training but changed to 2.5 for bullwhip runner
-
+        self.initn = self.node_price
 
         # customer demand 
         self.demand_dist = config.get("demand_dist", "poisson")
@@ -132,7 +133,7 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
         np.random.seed(seed=int(self.SEED))
         
         #Lead time noise 
-        self.noise_delay = config.get("noise_delay", False)
+        self.noise_delay = config.get("noise_delay", True)
         self.noise_delay_threshold = config.get("noise_delay_threshold", 0)
 
         # Capacity
@@ -274,6 +275,17 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
                 for product in range(self.num_products):
                     demand_pattern = np.random.poisson(self.mu, size=(len(self.retailers), self.num_periods))
                     self.customer_demand[:,:, product] = demand_pattern * 6
+            elif self.demand_dist == "nonstpoisson":
+                amplitude = self.config.get("amplitude", 5)
+                frequency = self.config.get("frequency", 1)
+                phase = self.config.get("phase", 0)
+                self.dist = poisson
+                self.customer_demand = np.ones((len(self.retailers), self.num_periods, self.num_products), dtype=np.int16)
+                for product in range(self.num_products):
+                    for period in range(self.num_periods):
+                        mu = amplitude * np.sin(2 * np.pi * frequency * period / self.num_periods + phase) + amplitude
+                        demand_pattern = np.random.poisson(mu, size=len(self.retailers))
+                        self.customer_demand[:, period, product] = demand_pattern * 6
             # Uniform distribution
             elif self.demand_dist == "uniform":
                 lower_upper = self.config.get("lower_upper", (1, 5))
@@ -302,12 +314,13 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
             
         bullwhip_time_introduction = 20
         bullwhip_duration = 10
-        demand_factor = 5
+        demand_factor = 1
 
         if self.bullwhip == True:
             if bullwhip_time_introduction < self.num_periods:
                 end_bullwhip_time = min(bullwhip_time_introduction + bullwhip_duration, self.num_periods)
                 self.customer_demand[:, bullwhip_time_introduction:end_bullwhip_time, :] *= demand_factor
+                print("Bullwhip effect introduced at time period {} and lasts for {} periods vale {}".format(bullwhip_time_introduction, bullwhip_duration, self.customer_demand))
 
 
 
@@ -462,9 +475,7 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
                 self.obs_vector[3+self.prev_length:3+self.prev_length*2] = order_history
 
                 self.obs_vector[3+self.prev_length*2:3+self.prev_length*2+self.max_delay] = delay_states[0]
-                #TODO: NEED TO DOUBLE CHECK THIS AND WHY ITS NOT RIGHT! 
             self.obs[agent] = self.obs_vector
-        #print("x in update state before obs.copy", self.x)
 
         self.state = self.obs.copy()
 
@@ -498,13 +509,15 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
 
                     #order_quant = max(0, self.S_value2 - self.s_value1)
                     if self.inv[t, node, product] < self.rescales1:
-                        order_quant = max(0, self.rescales2 - self.rescales1)
+                        #order_quant = max(0, self.S_value2 - self.s_value1)
+                        order_quant = max(0, self.rescales2 - self.inv[t, node, product])
                     else:
                         order_quant = 0
                     
                     if self.rescales2 < self.rescales1:
                         self.rescales2 = self.rescales1
                     
+                    #print("rescale s values ", (node_name, self.rescales1, self.rescales2, self.order_max[node, product], order_quant))
                     #order_quant = max(0, self.rescales2 - self.rescales1)
                     #print("order_quant",order_quant)
                     self.order_r[t, node, product] = order_quant
@@ -742,7 +755,7 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
         
         infos = {}
         
-        print("period {}, rewards {}".format(self.period, self.rewards))
+        #print("period {}, rewards {}".format(self.period, self.rewards))
         #infos['__all__'] = {}  
         for i in range(m * p):
             node = i // p
@@ -765,8 +778,8 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
             infos[node_name] = meta_info
 
 #need to comment when bullwhip simulation 
-        if self.bullwhip == True:
-            infos['overall_profit'] = total_profit
+        
+        #infos['overall_profit'] = total_profit
 
         """        for i in range(m):
                     for n in range(p):
@@ -783,8 +796,8 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
         for key,value in rewards.items():
             if isinstance(value, np.ndarray):
                 print(f"key step:{key}, shape: {value.shape}")
-            else:
-                print("not an array")
+            #else:
+                #print("not an array")
         return self.state, rewards, done, truncated, infos
     
     def get_rewards(self):
@@ -799,13 +812,18 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
             for product in range(p):
                 index = node * p + product
                 agent = self.node_names[index]
-                #if 20 <= t <= 30:
-                #    self.node_price[node, product] = 1.03 * self.node_price[node, product]
 
+                #if 20 <= t <= 30:
+                #    reward = 0.8 * self.node_price[node, product] * self.ship[t, node, product] \
+                #        - self.node_cost[node, product] * self.order_r[t, node, product] \
+                #        - self.stock_cost[node, product] * np.abs(self.inv[t + 1, node, product] - self.inv_target[node, product]) \
+                #        - self.backlog_cost[node, product] * self.backlog[t + 1, node, product]
+                #else:
                 reward = self.node_price[node, product] * self.ship[t, node, product] \
-                    - self.node_cost[node, product] * self.order_r[t, node, product] \
-                    - self.stock_cost[node, product] * np.abs(self.inv[t + 1, node, product] - self.inv_target[node, product]) \
-                    - self.backlog_cost[node, product] * self.backlog[t + 1, node, product]
+                        - self.node_cost[node, product] * self.order_r[t, node, product] \
+                        - self.stock_cost[node, product] * np.abs(self.inv[t + 1, node, product] - self.inv_target[node, product]) \
+                        - self.backlog_cost[node, product] * self.backlog[t + 1, node, product]
+                    
                 reward_sum[node][product] += reward
                 profit[node][product] = reward_sum[node][product]
                 rewards[agent] = reward
@@ -827,8 +845,8 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
         for key,value in rewards.items():
             if isinstance(value, np.ndarray):
                 print(f"key:{key}, shape: {value.shape}")
-            else:
-                print("not an array")
+            #else:
+                #print("not an array")
 
         return rewards , profit, total_profit
 
@@ -840,7 +858,7 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
 
         m = self.num_nodes
         t = self.period
-        self.noise_delay = False
+        self.noise_delay = True
         self.noise_delay_threshold = 50/100
         # Acquisition at node 0 is unique since 
         # delay is manufacturing delay instead of shipment delay

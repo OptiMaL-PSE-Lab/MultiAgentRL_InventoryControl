@@ -1,5 +1,5 @@
 
-from env3run import MultiAgentInvManagementDiv
+from env3rundiv import MultiAgentInvManagementDiv
 import gymnasium as gym
 from gymnasium.spaces import Dict, Box
 import numpy as np 
@@ -18,13 +18,14 @@ import json
 from ray.rllib.policy.policy import PolicySpec #For policy mapping
 from ccmodel import CentralisedCriticModel, FillInActions
 
-config = {"connections":{0: [1], 1:[2], 2:[3], 3:[4], 4:[5], 5:[6], 6:[7], 7:[8], 8:[9], 9:[10], 10:[11], 11:[]},
-          "num_products":2, 
-          "num_nodes":12}
+config = {"connections": {0: [1,2], 1:[3,4], 2:[4, 5], 3:[], 4:[], 5:[]}, 
+          #"num_products":2, 
+          "num_nodes": 6}
 
-num_agents= config["num_nodes"] * config["num_products"]
-num_products = config["num_products"]
+#num_agents= config["num_nodes"] * config["num_products"]
+#num_products = config["num_products"]
 num_nodes = config["num_nodes"]
+num_agents = num_nodes
 
 def ensure_dir(file_path):
     directory = os.path.dirname(file_path)
@@ -110,8 +111,8 @@ network = create_network(config["connections"])
 echelons = {node: get_stage(node, network) for node in range(len(network))}
 
 agent_ids = []
-agent_ids = [f"{echelons[node]}_{node:02d}_{product}" for node in range(len(network)) for product in range(num_products)]
-
+#agent_ids = [f"{echelons[node]}_{node:02d}_{product}" for node in range(len(network)) for product in range(num_products)]
+agent_ids = [f"{echelons[node]}_{node:02d}" for node in range(len(network))]
 print(agent_ids)
 # Define policies to train
 policy_graphs = {}
@@ -120,23 +121,6 @@ for i in range(num_agents):
 
 
 
-def policy_mapping_fn(agent_id, episode, worker, **kwargs):
-    '''Maps each Agent's ID with a different policy. So each agent is trained with a diff policy.'''
-    print("agent id in policy mapping function", agent_id)
-    get_policy_key = lambda agent_id: f"{agent_id}"  # noqa: E731
-    return get_policy_key(agent_id)
-
-# Policy Mapping function to map each agent to appropriate stage policy
-def policy_mapping_fn1(agent_id, episode, **kwargs):
-    for i in range(num_nodes * num_products):
-        if agent_id.startswith(agent_ids[i]):
-            return agent_ids[i]
-
-# Policy Mapping function to map each agent to appropriate stage policy
-def single_policy_mapping_fn(agent_id, episode, **kwargs):
-    for i in range(num_nodes * num_products):
-        if agent_id.startswith(agent_ids[i]):
-            return '0_00_0'
         
 def central_critic_observer(agent_obs, **kw):
     """agent observation includes all agents observation data for 
@@ -160,12 +144,6 @@ def central_critic_observer(agent_obs, **kw):
                 i += 1
 
     return new_obs
-
-#def model_creator():
-#    model = GNNCentralizedCriticModel(obs_space = obs_space, action_space = act_space, \
-#                num_outputs = 2, model_config = model_config, name=None, state = state)
-#    return model
-
 
 
 # Register environment

@@ -1,5 +1,5 @@
 
-from env3run import MultiAgentInvManagementDiv
+from env3rundiv import MultiAgentInvManagementDiv
 import gymnasium as gym
 from gymnasium.spaces import Dict, Box
 import numpy as np 
@@ -18,10 +18,16 @@ import json
 from ray.rllib.policy.policy import PolicySpec #For policy mapping
 #from model import GNNActorCriticModel
 
-config = {"connections":{0: [1], 1:[2], 2:[]},
-          "num_products":8, 
-          "num_nodes":3}
-#{0: [1,2], 1:[3,4,5], 2:[3,4,5], 3:[], 4:[], 5:[]}
+
+config = {"connections": {0: [1,2], 1:[3,4], 2:[4, 5], 3:[], 4:[], 5:[]}, 
+          #"num_products":2, 
+          "num_nodes": 6}
+
+#num_agents= config["num_nodes"] * config["num_products"]
+#num_products = config["num_products"]
+num_nodes = config["num_nodes"]
+num_agents = num_nodes
+
 def ensure_dir(file_path):
     directory = os.path.dirname(file_path)
     if not os.path.exists(directory):
@@ -33,12 +39,6 @@ def ensure_dir(file_path):
 ray.shutdown()
 ray.init(resources={"CUSTOM_RESOURCE":100}, log_to_driver= False)
 
-#todo - create centralised critic model class in models.py file 
-
-
-num_nodes = config["num_nodes"]
-num_periods = 2
-num_products = config["num_products"]
 
 # Set script seed
 SEED = 52
@@ -121,7 +121,8 @@ network = create_network(config["connections"])
 echelons = {node: get_stage(node, network) for node in range(len(network))}
 
 agent_ids = []
-agent_ids = [f"{echelons[node]}_{node:02d}_{product}" for node in range(len(network)) for product in range(num_products)]
+#agent_ids = [f"{echelons[node]}_{node:02d}_{product}" for node in range(len(network)) for product in range(num_products)]
+agent_ids = [f"{echelons[node]}_{node:02d}" for node in range(len(network))]
 
 print(agent_ids)
 # Define policies to train
@@ -188,7 +189,6 @@ def env_creator(config):
 tune.register_env("MultiAgentInvManagementDiv", env_creator)   # noqa: E501
 
 
-
 algo_w_5_policies = (
     PPOConfig()
     .environment(
@@ -209,6 +209,7 @@ algo_w_5_policies = (
     )
     .build()
 )
+
 iterations = 60
 for i in range(iterations):
     algo_w_5_policies.train()
