@@ -3,7 +3,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import json
 
-#plt.rcParams['text.usetex'] = True
+from torch import layout
+
+plt.rcParams['text.usetex'] = True
 
 ippo18 = r"ng1_18.json"
 mappo18 = r"ng2_18.json" 
@@ -103,8 +105,22 @@ def create_subplots_for_different_paths(file_paths_list):
         process_all_nodes_data(profits_dict, ax)
 
     plt.show()
-    #fig.savefig('execution_compile.png', dpi=1100)
+    fig.savefig('execution_compile.png', dpi=1100)
 
 file_paths_list = [file_paths6, file_paths12, file_paths18, file_paths24]
 
-create_subplots_for_different_paths(file_paths_list)
+
+def create_single_plot_for_file_paths(file_paths, label):
+    fig, ax = plt.subplots(figsize=(12, 8), layout='constrained')
+
+    profits_dict = process_all_nodes_data_from_file(file_paths)
+    process_all_nodes_data(profits_dict, ax)
+
+    fig.savefig(label, dpi=1100)
+    plt.show()
+
+file_paths_list = [file_paths6, file_paths12, file_paths18, file_paths24]
+labels = ['execute6.png', 'execute12.png', 'execute18.png', 'execute24.png']
+
+for file, label in zip(file_paths_list, labels):
+    create_single_plot_for_file_paths(file, label)
