@@ -1,5 +1,6 @@
 from collections import ChainMap
-import json 
+import json
+from statistics import mean 
 import matplotlib.pyplot as plt
 import numpy as np
 import os 
@@ -15,215 +16,34 @@ from matplotlib.colors import LinearSegmentedColormap
 from scipy import stats
 from torch import layout
 
-# --------------------------------------------  ng1 --------------------------------------------
+ippo6 = [r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-05-19_19-47-56f6z96d1b\result.json"]
+mappo6 = [r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-05-19_19-47-15u94ac_tc\result.json"]
+gmappo6 = [r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-05-19_19-49-37sbsnq6km\result.json"]
+g2_6 = [r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-05-19_23-09-53h3ojljkh\result.json"]
+g2_6noise = [r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-05-19_23-11-22vjup3rv8\result.json"]
+file_paths6 = [ippo6, mappo6, gmappo6, g2_6, g2_6noise]
 
+ippo12 = [r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-05-01_16-12-06owdt78yd\result.json"]
+mappo12 = [r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-05-02_13-36-43l0j31ce0\result.json"]
+gmappo12 = [r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-05-01_16-13-281w63y_j_\result.json"]
+g2_12 = [r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-05-01_12-00-15zbm_m4ax\result.json"]
+g2_12noise = [r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-05-01_16-11-11wakdzoi7\result.json"]
+file_paths12 = [ippo12, mappo12, gmappo12, g2_12, g2_12noise]
 
->>>>>>> 6784ca85ba80f2b20d30d6d8186ace78606f4133
-ng1_3n2p = [
-    r"/Users/nikikotecha/Documents/PhD/trainingss/results/PPO_MultiAgentInvManagementDiv_2024-02-07_11-56-05zpasv7px/result.json",
-    r"/Users/nikikotecha/Documents/PhD/trainingss/results/PPO_MultiAgentInvManagementDiv_2024-02-07_11-58-32ffzoj9sm/result.json",
-    r"/Users/nikikotecha/Documents/PhD/trainingss/results/PPO_MultiAgentInvManagementDiv_2024-02-07_12-01-076mbux2kk/result.json"
-]
+ippo18 = [r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-04-11_09-18-09gpdriji_\result.json"]
+mappo18 = [r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-04-10_20-41-03g7yt7xc3\result.json"]
+gmappo18 = [r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-04-10_20-40-58vb6xruob\result.json"]
+g2_18 = [r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-04-10_22-16-53zax54im2\result.json"]
+g2_18noise = [r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-05-15_11-14-05l1k6u06k\result.json"]
+file_paths18 = [ippo18, mappo18, gmappo18, g2_18, g2_18noise]
 
-ng1_6n2p = [
-    r"/Users/nikikotecha/Documents/PhD/trainingss/results/PPO_MultiAgentInvManagementDiv_2024-02-06_14-44-053nyf2_uz/result.json",
-r"/Users/nikikotecha/Documents/PhD/trainingss/results/PPO_MultiAgentInvManagementDiv_2024-02-06_14-51-29zpqpq7tt/result.json",
-r"/Users/nikikotecha/Documents/PhD/trainingss/results/PPO_MultiAgentInvManagementDiv_2024-02-06_15-05-47hm60m7n8/result.json",
-]
+ippo24 = [r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-05-06_15-42-44nu1jjpuk\result.json"]
+mappo24 = [r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-05-06_15-41-461marte8k\result.json"]
+gmappo24 = [r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-05-06_15-45-588zbz5wvr\result.json"]
+g2_24 = [r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-04-26_09-21-552nxyn_hr\result.json"]
+g2_24noise = [r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-05-07_08-35-34vpwck8mj\result.json"]
 
-ng1_12n2p = [
-    r"/Users/nikikotecha/Documents/PhD/trainingss/results/PPO_MultiAgentInvManagementDiv_2024-02-07_13-35-30e87zubfu/result.json",
-r"/Users/nikikotecha/Documents/PhD/trainingss/results/PPO_MultiAgentInvManagementDiv_2024-02-07_13-39-20d38mqks0/result.json",
-r"/Users/nikikotecha/Documents/PhD/trainingss/results/PPO_MultiAgentInvManagementDiv_2024-02-07_13-44-47hj9dvneu/result.json",
-]
-
-<<<<<<< HEAD
-ng1_3n4p = [
-    r"/Users/nikikotecha/Documents/PhD/trainingss/results/PPO_MultiAgentInvManagementDiv_2024-02-07_18-59-03ef41kyhv/result.json",
-r"/Users/nikikotecha/Documents/PhD/trainingss/results/PPO_MultiAgentInvManagementDiv_2024-02-07_18-59-36d1eopod3/result.json",
-r"/Users/nikikotecha/Documents/PhD/trainingss/results/PPO_MultiAgentInvManagementDiv_2024-02-07_18-59-457tnpdc9p/result.json",
-=======
-ng1_16n2p = [r"C:\Users\nk3118\Documents\sS\result_ng1_32.json" #combined the two files below
-    #r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-02-28_10-52-50py6yw7c9\result.json",
-            # r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-02-28_13-44-25ek8bd981\result.json"
->>>>>>> 6784ca85ba80f2b20d30d6d8186ace78606f4133
-]
-
-ng1_24n2p = [r"c:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-03-04_11-11-347xe53e4m/result.json"]
-
-# --------------------------------------------  ng2 --------------------------------------------
-
-ng2_3n2p = [
-<<<<<<< HEAD
-    r"/Users/nikikotecha/Documents/PhD/trainingss/results/PPO_MultiAgentInvManagementDiv_2024-02-14_17-31-39a0c4zn9f/result.json",
-r"/Users/nikikotecha/Documents/PhD/trainingss/results/PPO_MultiAgentInvManagementDiv_2024-02-14_17-39-58jcz3bfq6/result.json",
-r"/Users/nikikotecha/Documents/PhD/trainingss/results/PPO_MultiAgentInvManagementDiv_2024-02-14_20-07-33jjinsoss/result.json",
-
-]
-
-ng2_6n2p = [
-r"/Users/nikikotecha/Documents/PhD/trainingss/results/PPO_MultiAgentInvManagementDiv_2024-02-15_23-38-04f9uwxe_r/result.json",
-]
-
-ng2_12n2p = [
-r"/Users/nikikotecha/Documents/PhD/trainingss/results/PPO_MultiAgentInvManagementDiv_2024-02-19_10-45-192_ypvuv1/result.json",
-]
-
-g1_3n2p = [
-    r"/Users/nikikotecha/Documents/PhD/trainingss/results/PPO_MultiAgentInvManagementDiv_2024-02-14_14-01-01fcmfw_2i/result.json",
-r"/Users/nikikotecha/Documents/PhD/trainingss/results/PPO_MultiAgentInvManagementDiv_2024-02-14_14-00-29pje09paj/result.json",
-r"/Users/nikikotecha/Documents/PhD/trainingss/results/PPO_MultiAgentInvManagementDiv_2024-02-14_13-58-25n4fwicdl/result.json",
-]
-
-g1_6n2p = [
-r"/Users/nikikotecha/Documents/PhD/trainingss/results/PPO_MultiAgentInvManagementDiv_2024-02-15_11-15-57r79y_26u/result.json",
-r"/Users/nikikotecha/Documents/PhD/trainingss/results/PPO_MultiAgentInvManagementDiv_2024-02-15_11-17-17ckbvo_zj/result.json",
-r"/Users/nikikotecha/Documents/PhD/trainingss/results/PPO_MultiAgentInvManagementDiv_2024-02-15_23-41-23yiqe3u6s/result.json",
-]
-
-g1_12n2p = [
-r"/Users/nikikotecha/Documents/PhD/trainingss/results/PPO_MultiAgentInvManagementDiv_2024-02-16_10-23-49deadjktl/result.json",
-r"/Users/nikikotecha/Documents/PhD/trainingss/results/PPO_MultiAgentInvManagementDiv_2024-02-16_10-31-08bfqq3dv0/result.json",
-r"/Users/nikikotecha/Documents/PhD/trainingss/results/PPO_MultiAgentInvManagementDiv_2024-02-19_10-43-271w6m6xd5/result.json",
-]
-
-g2_3n2p = [
-
-]
-
-g2_6n2p =[
-
-]
-
-g2_12n2p = [
-=======
-    r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-02-14_17-31-39a0c4zn9f\result.json",
-r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-02-14_17-39-58jcz3bfq6\result.json",
-r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-02-14_20-07-33jjinsoss\result.json",
-]
-
-ng2_6n2p = [
-r"c:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-02-15_23-38-04f9uwxe_r\result.json",
-]
-
-ng2_12n2p = [
-#r"c:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-02-19_10-45-192_ypvuv1\result.json",
-r"c:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-03-11_14-06-217y1zrgx2\result.json" #this is new vs
-]
-
-ng2_16n2p = [r"C:\Users\nk3118\Documents\sS\result_ng2_32.json", #combined the two files below
-             r"c:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-03-12_15-42-223423r374\result.json"
-    #r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-02-28_10-43-55wdgfzx11\result.json",
-#r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-02-28_14-04-01auuos13n\result.json",
-]
-
-ng2_24n2p = [r"C:\Users\nk3118/ray_results\PPO_MultiAgentInvManagementDiv_2024-03-04_19-37-31qum_qv81\result.json"]
-
-# -------------------------------------------- g1 --------------------------------------------
-
-g1_3n2p = [
-    #r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-02-14_14-01-01fcmfw_2i\result.json",
-#r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-02-14_14-00-29pje09paj\result.json",
-#r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-02-14_13-58-25n4fwicdl\result.json",
-#r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-03-11_09-21-52eoxu8djo\result.json" #this is new vs
-r"c:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-03-20_11-38-088hhtc7tg\result.json" #this is new vs
-
-]
-
-g1_6n2p = [
-#r"c:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-02-15_11-15-57r79y_26u\result.json",
-#r"c:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-02-15_11-17-17ckbvo_zj\result.json",
-#r"c:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-02-15_23-41-23yiqe3u6s\result.json", 
-r"c:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-03-09_19-10-07vq1_rwzf\result.json", #this is new vs
-]
-
-g1_12n2p = [
-#r"c:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-02-16_10-23-49deadjktl\result.json",
-#r"c:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-02-16_10-31-08bfqq3dv0\result.json",
-#r"c:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-02-19_10-43-271w6m6xd5\result.json",
-#r"c:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-02-20_18-02-24i9zbiioa\result.json",
-#r"c:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-02-26_11-39-5432h72q5x\result.json",
-r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-03-10_23-32-256mmmvasp\result.json" #this is new vs
-]
-
-g1_16n2p = [#r"c:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-02-27_13-58-27v_j7y4wt\result.json", 
-            #r"C:\Users\nk3118\Documents\sS\result_g1_32.json",
-            r"c:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-03-10_00-33-224winipu1\result.json" #this is new vs 
-    ]
-
-g1_24n2p = [#r"C:\Users\nk3118\Documents\sS\result_g1_48.json",
-            r"c:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-03-06_20-59-44ar37rczw\result.json"] #this is new vs 
-
-# -------------------------------------------- g1 --------------------------------------------
-
-g2_3n2p = [#r"C:\Users\nk3118\Documents\sS\result_g2_6.json" #the below only goes to 55 so it combines the other file
-    #r"c:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-02-21_21-03-10xa39f2kh\result.json",
-    r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-03-11_11-19-354ekr_jrt\result.json" #this is new vs
->>>>>>> 6784ca85ba80f2b20d30d6d8186ace78606f4133
-
-]
-
-g2_6n2p = [#r"c:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-02-22_14-29-24vla7q9im\result.json",
-           r"c:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-03-09_14-55-28kuvg86t4\result.json" #this is new vs
-           ]
-
-g2_12n2p = [
-            #r"c:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-02-21_11-56-29ipv5qji4\result.json",
-             #r"c:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-02-22_20-14-23tu6r2u9b\result.json",
-             r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-03-10_13-48-310gk7ntjx\result.json" #this is new vs
-]
-
-g2_16n2p = [
-    #r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-02-26_23-03-100_1btam3\result.json",
-    r"c:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-03-09_01-54-194ml6r6d_\result.json" #new vs
-]
-
-g2_24n2p = [#r"C:\Users\nk3118\Documents\sS\result_g2_48.json",
-            r"c:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-03-07_22-58-1331e7d1y_\result.json" #new vs
-            ]
-
-iteration_to_check = 60
-<<<<<<< HEAD
-file_paths1 = [ng1_3n2p, ng2_3n2p, g1_3n2p]
-file_paths2 = [ng1_6n2p, ng2_6n2p, g1_6n2p]
-file_paths3 = [ng1_12n2p, ng2_12n2p, g1_12n2p]
-number_agents = [1,1,1]
-
-scale1 = [ng1_3n2p, ng1_6n2p, ng1_12n2p]
-scale2 = [ng2_3n2p, ng2_6n2p, ng2_12n2p]
-scale3 = [g1_3n2p, g1_6n2p, g1_12n2p]
-number_agents1 = [6,12,24]
-=======
-
-ng2_new6 = [r"c:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-03-20_14-15-0053qk6p3z\result.json"]
-#file paths grouped per method 
-file_paths6 = [ng1_3n2p, ng2_new6, g1_3n2p, g2_3n2p]
-#file_paths12 =[ng1_6n2p, ng2_6n2p, g1_6n2p, g2_6n2p]
-#file_paths24 = [ng2_12n2p, ng1_12n2p, g1_12n2p, g2_12n2p]
-file_paths32 = [ng1_16n2p, ng2_16n2p, g2_16n2p, g1_16n2p]
-file_paths48 = [ng1_24n2p, ng2_24n2p, g2_24n2p, g1_24n2p]
-
-g1= [r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-04-04_12-04-12fzniw9d1\result.json"]
-ng2 = [r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-04-04_11-56-101jbkgqou\result.json"]
-g2 = [r"c:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-04-04_15-33-39sojltnl4\result.json"]
-n4 = [r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-04-05_10-53-524go0l40j\result.json"]
-
-g124= [r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-04-08_14-54-09e34hq7ae\result.json"]
-ng224 = [r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-04-08_14-50-43wxg9s41x\result.json"]
-g224 = [r"c:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-04-10_10-14-32uhxhdvnp\result.json"]
-ng124 = [r"c:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-04-08_15-16-48c488e0lg\result.json"]
-
-file_paths12 = [n4, ng2, g1, g2]
-file_paths24 = [ng124, ng224, g124, g224]
-number_agents = [1,1,1,1,1]
-
-mappo_24 = [r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-05-06_15-41-461marte8k\result.json"]
-ippo_24 =  [r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-05-06_15-42-44nu1jjpuk\result.json"]
-gmappo_24 = [r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-05-06_15-45-588zbz5wvr\result.json"]
-g2_noise0 = [r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-05-07_08-10-33cjpows2l\result.json"]
-g2_noise1 = [r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-05-07_08-35-34vpwck8mj\result.json"]
-
-file_paths = [mappo_24, ippo_24, gmappo_24, g2_noise0, g2_noise1]
+file_paths24 = [ippo24, mappo24, gmappo24, g2_24, g2_24noise]
 
 >>>>>>> 6784ca85ba80f2b20d30d6d8186ace78606f4133
 def normalize_rewards(rewards, num_agents):
@@ -246,13 +66,12 @@ def training_figures(file_paths_list, iteration_to_check, number_agents):
 =======
     mean_training_times = []
     stds_training_times = []
-    fig, ax = plt.subplots(1,1,figsize=(10,6), layout = 'constrained')
-
-    for file_paths , label, no_agent in zip(file_paths_list, ['IPPO', 'MAPPO', 'GMAPPO', 'GMAPPO with Pooling', 'GMAPPO with Pooling & Noise'], number_agents):
+    all_avg_rewards = []
+    for file_paths , label, no_agent in zip(file_paths_list, ['IPPO', 'MAPPO', 'GMAPPO', 'GP-MAPPO', 'Noise GP-MAPPO'], number_agents):
         all_rewards = []
         mean_training_times_path = []
         stds_training_times_path = []
->>>>>>> 6784ca85ba80f2b20d30d6d8186ace78606f4133
+
         for path in file_paths:
             with open(path, 'r') as f:
                 json_str = f.read()
@@ -284,7 +103,7 @@ def training_figures(file_paths_list, iteration_to_check, number_agents):
 
             time_step = np.array(time_step)
             z_scores = stats.zscore(time_step)
-            time_steps = time_step[np.abs(z_scores) < 3]
+            time_steps = time_step[np.abs(z_scores) < 1]
 
             mean_training_times_path.append(np.median(time_step))
             stds_training_times_path.append(np.std(time_steps))  
@@ -302,206 +121,97 @@ def training_figures(file_paths_list, iteration_to_check, number_agents):
 
         avg_reward = np.nanmean(padded_rewards, axis=0)
         std_reward = np.nanstd(padded_rewards, axis=0)
-
         iteration_index = min(iteration_to_check, max_iterations - 1)
-
         highest_avg_reward_path = file_paths[np.argmax(avg_reward[iteration_index])]
-        ax.plot(range(max_iterations), avg_reward, label=label)
-        #ax.fill_between(range(max_iterations), avg_reward - std_reward, avg_reward + std_reward, alpha=0.3, label='Standard Deviation')
-        ax.set_xlabel('Iteration', fontsize=18)
-        ax.set_ylabel('Normalized Reward',fontsize=18)
-        #ax.set_yscale('log')
-    ax.legend(frameon = False, fontsize=14)
-    ax.spines['right'].set_visible(False)
-    ax.spines['top'].set_visible(False)
-    labels = ['6', '12', '24', '32', '48']
-    #for label in labels:
-    #    fig.savefig(f'training_{label}.png', dpi = 1200)
+        all_avg_rewards.append(avg_reward)
+    print(mean_training_times)
+    return highest_avg_reward_path, mean_training_times, stds_training_times, all_avg_rewards, std_reward
+
+
+def plots(file_paths_list):
+    colors = ['tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple', 'tab:brown']
+    labels = ['IPPO', 'MAPPO', 'G-MAPPO', 'GP-MAPPO', 'Noise GP-MAPPO', 'N/A']
+    n_sets = len(file_paths_list)
+    fig, axes = plt.subplots(2, 2, figsize=(18, 12), constrained_layout=True)
+    axes = axes.flatten()
+
+    if n_sets == 1:
+        axes = [axes]  # Ensure axes is always iterable
+    labels_pos = ['a)', 'b)', 'c)', 'd)']
+
+    for ax, label in zip(axes.flatten(), labels_pos):
+        ax.text(0.5, -0.2, label, transform=ax.transAxes, 
+            fontsize=14, va='center', ha='center')
+        
+    for i, file_paths in enumerate(file_paths_list):
+        highest_avg_reward_path, mean_training_times, stds_training_times, all_avg_rewards, std_reward = training_figures(file_paths, 100, [1,1,1,1,1])
+        iterations = range(len(all_avg_rewards[0]))
+        ax = axes[i]
+        for j, (avg_reward, color, label) in enumerate(zip(all_avg_rewards, colors, labels)):
+            ax.plot(iterations, avg_reward, label=label, color=color)
+            # Uncomment to add shaded area for std deviation
+            # ax.fill_between(iterations, avg_reward - std_reward, avg_reward + std_reward, color=color, alpha=0.2)
+
+        ax.set_xlabel('Iteration', fontsize=14)
+        ax.set_ylabel('Reward', fontsize=14)
+        ax.legend(frameon=False, fontsize=12)
+        #ax.spines['right'].set_visible(False)
+        #ax.spines['top'].set_visible(False)
+    fig.savefig('training_compile1.png', dpi=1100)
     plt.show()
 
-<<<<<<< HEAD
-        plt.plot(range(max_iterations), avg_reward, label=label)
-        plt.fill_between(range(max_iterations), avg_reward - std_reward, avg_reward + std_reward, alpha=0.3, label='Standard Deviation', color='g')
 
-    print("mean, std", mean_time_iters, std_time_iters) 
-    #print("mean, std", m, s)    
-    #plt.errorbar(file_paths_list, mean_time_iters, std_time_iters)
+file_paths_list = [file_paths6, file_paths12, file_paths18, file_paths24]
 
-    #plt.xlabel('Iteration')
-    #plt.ylabel('Reward')
-    #plt.title('Training curves')
-    #plt.legend()
-    #plt.show()
-    current_directory = os.getcwd()
-    filename = 'training.png'
-    #plt.savefig(filename, format='png', bbox_inches='tight', dpi=500)
-    full_path = os.path.join(current_directory, filename)
-=======
-    return highest_avg_reward_path, mean_training_times, stds_training_times, avg_reward, std_reward
+plots(file_paths_list)
 
->>>>>>> 6784ca85ba80f2b20d30d6d8186ace78606f4133
 
-highest_avg_reward_path6, mean_training_times6, stds_training_times6, avg_reward6, std_reward6 = training_figures(file_paths, iteration_to_check, number_agents)
-'''
-highest_avg_reward_path12, mean_training_times12, stds_training_times12, avg_reward12, std_reward12 = training_figures(file_paths12, iteration_to_check, number_agents)
-highest_avg_reward_path24, mean_training_times24, stds_training_times24, avg_reward24, std_reward24 = training_figures(file_paths24, iteration_to_check, number_agents)
-highest_avg_reward_path32, mean_training_times32, stds_training_times32, avg_reward32, std_reward32 = training_figures(file_paths32, iteration_to_check, number_agents)
-highest_avg_reward_path48, mean_training_times48, stds_training_times48, avg_reward48, std_reward48 = training_figures(file_paths48, iteration_to_check, number_agents)
+def error_bars_method(file_paths_list, number_agents_list):
+    colors = ['tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple', 'tab:brown']
+    markers = ['o', 's', 'D', '^']
+    labels = ['IPPO', 'MAPPO', 'G-MAPPO', 'GP-MAPPO', 'Noise GP-MAPPO']
+    fig, ax = plt.subplots(figsize=(18, 8))
+    
+    for i, (file_paths, num_agents, color, marker) in enumerate(zip(file_paths_list, number_agents_list, colors, markers)):
+        highest_avg_reward_path, mean_training_times, stds_training_times, all_avg_rewards, std_reward = training_figures(file_paths, 100, [1,1,1,1,1])
+        ax.errorbar(labels, mean_training_times, yerr=stds_training_times, fmt=marker, color=color, capsize=5, label=f'{num_agents} Agents')
 
-mean_training_times_dict = {
-    '3n2p': mean_training_times6,
-    '6n2p': mean_training_times12,
-    '12n2p': mean_training_times24,
-    '16n2p': mean_training_times32,
-    '24n2p': mean_training_times48,
-}
+    ax.legend(frameon=False, fontsize=14)
+    ax.set_ylabel('Mean Training Time', fontsize=14)
+    ax.set_xlabel('Methods', fontsize=14)
+    #ax.spines['right'].set_visible(False)
+    #ax.spines['top'].set_visible(False)
+    plt.tight_layout()
+    fig.savefig('error_bars_compile.png', dpi=1100)
+    plt.show()
 
-stds_training_times_dict = {    
-    '3n2p': stds_training_times6,
-    '6n2p': stds_training_times12,
-    '12n2p': stds_training_times24,
-    '16n2p': stds_training_times32,
-    '24n2p': stds_training_times48,
-}
-'''
+number_agents_list = [6, 12, 18, 24]
 
-def error_bars_method(mean_training_times_dict, stds_training_times_dict):
-    agents = ['6', '12', '24', '32', '48']  # Example agent names
-    methods = ['ng1', 'ng2', 'g1', 'g2']  # Example method names
+# Execute the error bars method with the provided file paths
+#error_bars_method(file_paths_list, number_agents_list)
 
-    # Convert dictionaries to arrays
-    mean_training_times = np.array([mean_training_times_dict[key] for key in mean_training_times_dict])
-    stds_training_times = np.array([stds_training_times_dict[key] for key in stds_training_times_dict])
+def error_bars_method1(file_paths_list):
+    colors = ['tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple', 'tab:brown']
+    labels = ['IPPO', 'MAPPO', 'G-MAPPO', 'GP-MAPPO', 'Noise GP-MAPPO']
+    n_sets = len(file_paths_list)
+    fig, axes = plt.subplots(2, 2, figsize=(18, 6 * n_sets), layout = 'constrained')
+    axes = axes.flatten()
 
-    # Plot error bar graphs for each method
-    fig, axs = plt.subplots(1, len(methods), figsize=(12, 6), sharey=True)
-    for i, method in enumerate(methods):
-        ax = axs[i]
-        x = np.arange(len(agents))
-        y = mean_training_times[:, i]
-        yerr = stds_training_times[:, i]
-        ax.errorbar(x, y, yerr=yerr, fmt='o', capsize=5)
-        ax.set_title(method)
-        ax.set_xticks(x)  # Set the ticks based on the positions
-        ax.set_xticklabels(agents)  # Set the tick labels to be the agent names
+    if n_sets == 1:
+        axes = [axes]  # Ensure axes is always iterable
+    labels_pos = ['a)', 'b)', 'c)', 'd)']
+
+    for ax, label in zip(axes.flatten(), labels_pos):
+        ax.text(0.5, -0.2, label, transform=ax.transAxes, 
+            fontsize=14, va='center', ha='center')
+        
+    for i, file_paths in enumerate(file_paths_list):
+        highest_avg_reward_path, mean_training_times, stds_training_times, all_avg_rewards, std_reward = training_figures(file_paths, 100, [1,1,1,1,1])
+        ax = axes[i]
+        ax.errorbar(labels, mean_training_times, yerr=stds_training_times, fmt='o', capsize=5)
     ax.legend(frameon = False, fontsize=14)
-    axs[0].set_ylabel('Mean Training Time')
-    axs[-1].set_xlabel('Agents')
+    axes[0].set_ylabel('Mean Time per Iteraton (s)')
+    axes[-1].set_xlabel('Agents')
     plt.tight_layout()
     plt.show()
-
-def error_bars_method_all(mean_training_times_dict, stds_training_times_dict):
-    agents = ['6', '12', '24', '32', '48']  # Example agent names
-    methods = ['IPPO', 'MAPPO', 'GMAPPO', 'GMAPPO with Pooling']  # Example method names
-
-    # Convert dictionaries to arrays
-    mean_training_times = np.array([mean_training_times_dict[key] for key in mean_training_times_dict])
-    stds_training_times = np.array([stds_training_times_dict[key] for key in stds_training_times_dict])
-
-    # Plot error bar graphs for each method
-    fig, ax = plt.subplots(1, 1, figsize=(12, 6), sharey=True)
-    for i, method in enumerate(methods):
-        x = np.arange(len(agents))
-        y = mean_training_times[:, i]
-        yerr = stds_training_times[:, i]
-        ax.errorbar(x, y, yerr=yerr, fmt='o', capsize=5, label = method)
-        ax.set_xticks(x)  # Set the ticks based on the positions
-        ax.set_xticklabels(agents)  # Set the tick labels to be the agent names
-    ax.legend(frameon = False, fontsize=14)
-    ax.set_ylabel('Medium Training Time per iteration, s')
-    ax.set_xlabel('Number of Agents')
-    ax.legend(frameon = False, fontsize=14)
-    plt.tight_layout()
-    fig.savefig('training_times.png', dpi = 1200)
     plt.show()
-
-def error_bars_agents(mean_training_times_dict, stds_training_times_dict):
-    agents = ['6', '12', '24', '32', '48']  # Example agent names
-    methods = ['ng1', 'ng2', 'g1', 'g2']  # Example method names
-
-    mean_training_times = np.array([mean_training_times_dict[key] for key in mean_training_times_dict])
-    stds_training_times = np.array([stds_training_times_dict[key] for key in stds_training_times_dict])
-
-    plt.figure(figsize=(12, 6))
-    for i, agent in enumerate(agents):
-        plt.subplot(1, len(agents), i + 1)
-        x = np.arange(len(methods))
-        y = mean_training_times[i, :]
-        yerr = stds_training_times[i, :]
-        plt.errorbar(x, y, yerr=yerr, fmt='o', capsize=5)
-        plt.title(agent)
-        plt.xlabel('Methods')
-        plt.ylabel('Mean Training Time')
-
-    plt.tight_layout()
-    plt.show()
-   
-def heatmap(mean_training_times_dict, stds_training_times_dict):
-    mean_training_times = np.array([mean_training_times_dict[key] for key in mean_training_times_dict])
-    stds_training_times = np.array([stds_training_times_dict[key] for key in stds_training_times_dict])
-
-    agents = ['6', '12', '24', '32', '48']  # Example agent names
-    methods = ['ng1', 'ng2', 'g1', 'g2']  # Example method names
-
-    plt.figure(figsize=(10, 6))
-    colors = [(0, 'green'), (0.5, 'yellow'), (1, 'red')]  # Green to Yellow to Red
-    cmap = LinearSegmentedColormap.from_list('custom', colors)
-
-    plt.imshow(mean_training_times, cmap=cmap, interpolation='nearest')
-
-    # Add colorbar
-    cbar = plt.colorbar()
-    cbar.set_label('Mean Training Time')
-
-    # Add labels
-    plt.title('Mean Training Time Heatmap')
-    plt.xlabel('Methods')
-    plt.ylabel('Agents')
-    plt.xticks(np.arange(len(methods)), methods)
-    plt.yticks(np.arange(len(agents)), agents)
-    plt.show()
-
-<<<<<<< HEAD
-#highest_avg_reward_path = training_figures(file_paths1, iteration_to_check, number_agents)
-#highest_avg_reward_path = training_figures(file_paths2, iteration_to_check, number_agents)
-#highest_avg_reward_path = training_figures(file_paths3, iteration_to_check, number_agents)
-
-highest_avg_reward_path = training_figures(scale1, iteration_to_check, number_agents1)
-highest_avg_reward_path = training_figures(scale2, iteration_to_check, number_agents1)
-highest_avg_reward_path = training_figures(scale3, iteration_to_check, number_agents1)
-
-
-=======
-#error_bars_method_all(mean_training_times_dict, stds_training_times_dict)
-# error_bars_agents(mean_training_times_dict, stds_training_times_dict)
-#heatmap(mean_training_times_dict, stds_training_times_dict)
->>>>>>> 6784ca85ba80f2b20d30d6d8186ace78606f4133
-
-def plot_mean_rewards(file_paths, label, color, linestyle):
-    all_rewards = []
-
-    for path in file_paths:
-        with open(path, 'r') as f:
-            json_str = f.read()
-            json_list = json_str.split('\n')
-
-        results_list = []
-        for json_obj in json_list:
-            if json_obj.strip():
-                results_list.append(json.loads(json_obj))
-
-        episode_reward_mean = [result['episode_reward_mean'] for result in results_list]
-        all_rewards.append(episode_reward_mean)
-
-    max_iterations = max(len(rewards) for rewards in all_rewards)
-    padded_rewards = [r + [np.nan] * (max_iterations - len(r)) for r in all_rewards]
-
-    avg_reward = np.nanmean(padded_rewards, axis=0)
-    std_reward = np.nanstd(padded_rewards, axis=0)
-
-    iteration_to_check = min(70, max_iterations - 1)
-
-    plt.plot(range(max_iterations), avg_reward, label=label, color=color, linestyle = linestyle)
-    #plt.fill_between(range(max_iterations), avg_reward - std_reward, avg_reward + std_reward, alpha=0.3, label=f'Standard Deviation ({label})', color='grey')
-
-iteration_to_check = 70

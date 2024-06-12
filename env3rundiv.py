@@ -89,7 +89,7 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
 
         self.num_agents = config.get("num_agents", self.num_nodes)
         self.inv_init = config.get("init_inv", np.ones(self.num_nodes)*100)
-        self.inv_target = config.get("inv_target", np.ones(self.num_nodes) * 0)
+        self.inv_target = config.get("inv_target", np.ones(self.num_nodes) * 10) #0?
         self.prev_actions = config.get("prev_actions", True)
         self.prev_demand = config.get("prev_demand", True)
         self.prev_length = config.get("prev_length", 1)
