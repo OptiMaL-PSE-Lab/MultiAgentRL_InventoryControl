@@ -30,6 +30,15 @@ g2_24noise = [r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-
 
 file_paths24 = [ippo24, mappo24, gmappo24, g2_24, g2_24noise]
 
+noise_18_0 = [r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-05-12_18-09-12pea61thx\result.json"]
+noise_18_01 = [r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-05-12_18-10-223euvrde2\result.json"]
+noise_18_02 = [r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-05-15_11-14-05l1k6u06k\result.json"]
+noise_18_05 = [r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-05-14_13-47-33xyca2ajl\result.json"]
+noise_18_75 = [r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-05-15_11-16-012_kinfxk\result.json"]
+noise_18_10 = [r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-05-14_13-48-08fskh2eg9\result.json"]
+noise_18_20 = [r"C:\Users\nk3118\ray_results\PPO_MultiAgentInvManagementDiv_2024-05-16_10-29-44k80w0cni\result.json"]
+file_paths_noise_all  = [noise_18_0, noise_18_01, noise_18_02, noise_18_05, noise_18_10, noise_18_20]
+
 def copy_files(file_paths, destination_folder):
     for file_path in file_paths:
         # Get the part of the file path after 'ray_results'
@@ -46,7 +55,7 @@ def copy_files(file_paths, destination_folder):
 
 destination_folder = r"C:\Users\nk3118\OneDrive - Imperial College London\Documents\sS"  # replace with your destination folder
 
-all_file_paths = [file_paths6, file_paths12, file_paths18, file_paths24]
+all_file_paths = [file_paths_noise_all]
 for file_paths in all_file_paths:
     copy_files(file_paths, destination_folder)
     print(f"Files copied to {destination_folder}")
