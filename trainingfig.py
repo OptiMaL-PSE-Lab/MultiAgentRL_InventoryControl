@@ -7,6 +7,7 @@ import os
 from matplotlib.colors import LinearSegmentedColormap
 from scipy import stats
 from torch import layout
+import pandas as pd
 
 plt.rcParams['text.usetex'] = True
 
@@ -29,15 +30,22 @@ mappo18 = [r"ray_results/PPO_MultiAgentInvManagementDiv_2024-04-10_20-41-03g7yt7
 gmappo18 = [r"ray_results/PPO_MultiAgentInvManagementDiv_2024-04-10_20-40-58vb6xruob/result.json"]
 g2_18 = [r"ray_results/PPO_MultiAgentInvManagementDiv_2024-04-10_22-16-53zax54im2/result.json"]
 g2_18noise = [r"ray_results/PPO_MultiAgentInvManagementDiv_2024-05-15_11-14-05l1k6u06k/result.json"]
+g2_181 = [r"ray_results/PPO_MultiAgentInvManagementDiv_2024-09-29_15-48-211fvy82mo/result.json"]
+g2_18noise1 = [r"ray_results/PPO_MultiAgentInvManagementDiv_2024-10-01_13-48-08b_8t6a36/result.json"]
+
 file_paths18 = [ippo18, mappo18, gmappo18, g2_18, g2_18noise]
+file_paths181 = [ippo18, mappo18, gmappo18, g2_181, g2_18noise1]
+
 
 ippo24 = [r"ray_results/PPO_MultiAgentInvManagementDiv_2024-05-06_15-42-44nu1jjpuk/result.json"]
 mappo24 = [r"ray_results/PPO_MultiAgentInvManagementDiv_2024-05-06_15-41-461marte8k/result.json"]
 gmappo24 = [r"ray_results/PPO_MultiAgentInvManagementDiv_2024-05-06_15-45-588zbz5wvr/result.json"]
 g2_24 = [r"ray_results/PPO_MultiAgentInvManagementDiv_2024-04-26_09-21-552nxyn_hr/result.json"]
 g2_24noise = [r"ray_results/PPO_MultiAgentInvManagementDiv_2024-05-07_08-35-34vpwck8mj/result.json"]
+g2_24noise1 = [r"ray_results/PPO_MultiAgentInvManagementDiv_2024-09-30_19-36-461o09f733/result.json"]
 
 file_paths24 = [ippo24, mappo24, gmappo24, g2_24, g2_24noise]
+file_paths241 = [ippo24, mappo24, gmappo24, g2_24, g2_24noise1]
 
 def normalize_rewards(rewards, num_agents):
     return [reward / num_agents for reward in rewards]
@@ -74,13 +82,14 @@ def training_figures(file_paths_list, iteration_to_check, number_agents):
             for result in results_list:
                 iteration = result['training_iteration']
                 episode_reward_mean.append(result['episode_reward_mean'])
-                time_step.append(result['time_this_iter_s'])
+                if result['time_this_iter_s'] <= 1000:  # Filtering condition
+                    time_step.append(result['time_this_iter_s'])
 
             time_step = np.array(time_step)
             z_scores = stats.zscore(time_step)
             time_steps = time_step[np.abs(z_scores) < 1]
 
-            mean_training_times_path.append(np.median(time_step))
+            mean_training_times_path.append(np.median(time_steps))
             stds_training_times_path.append(np.std(time_steps))  
 
         normalized_rewards = normalize_rewards(episode_reward_mean, no_agent)
@@ -101,9 +110,45 @@ def training_figures(file_paths_list, iteration_to_check, number_agents):
     return highest_avg_reward_path, mean_training_times, stds_training_times, all_avg_rewards, std_reward
 
 
-def plots(file_paths_list):
+def plots2(file_paths_list, window_size=10):
     colors = ['tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple', 'tab:brown']
     labels = ['IPPO', 'MAPPO', 'G-MAPPO', 'GP-MAPPO', 'Noise GP-MAPPO', 'N/A']
+    
+    for i, file_paths in enumerate(file_paths_list):
+        highest_avg_reward_path, mean_training_times, stds_training_times, all_avg_rewards, std_reward = training_figures(file_paths, 100, [1, 1, 1, 1, 1])
+        iterations = range(len(all_avg_rewards[0]))
+
+        fig, ax = plt.subplots(figsize=(12, 8), layout='constrained')
+
+        for j, (avg_reward, color, label) in enumerate(zip(all_avg_rewards, colors, labels)):
+            # Calculate moving average and standard deviation
+            moving_avg = pd.Series(avg_reward).rolling(window=window_size).mean()
+            moving_std = pd.Series(avg_reward).rolling(window=window_size).std()
+
+            # Plot the moving average
+            ax.plot(iterations, moving_avg, label=f'{label} (MA)', color=color, linestyle='--')
+            # Plot the shaded area for standard deviation
+            ax.fill_between(iterations, moving_avg - moving_std, moving_avg + moving_std, color=color, alpha=0.2)
+
+        # Set labels and title
+        ax.set_xlabel('Iteration', fontsize=16)
+        ax.set_ylabel('Reward', fontsize=16)
+        ax.legend(frameon=False, fontsize=14)
+        
+        # Increase tick label size
+        ax.tick_params(axis='both', which='major', labelsize=14)
+
+        # Save the figure in both PNG and PDF formats
+        """        file_name = f'figures/train_{i + 1}'
+                fig.savefig(f'{file_name}.png', dpi=1100)
+                fig.savefig(f'{file_name}.pdf', dpi=1100)"""
+        
+        plt.show()
+
+
+def plots(file_paths_list):
+    colors = ['tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple', 'tab:brown']
+    labels = ['IPPO', 'MAPPO', 'G-MAPPO', 'P-GCN-MAPPO', 'Noisy P-GCN-MAPPO', 'N/A']
     
         
     for i, file_paths in enumerate(file_paths_list):
@@ -115,26 +160,27 @@ def plots(file_paths_list):
             # Uncomment to add shaded area for std deviation
             # ax.fill_between(iterations, avg_reward - std_reward, avg_reward + std_reward, color=color, alpha=0.2)
 
-        ax.set_xlabel('Iteration', fontsize=14)
-        ax.set_ylabel('Reward', fontsize=14)
-        ax.legend(frameon=False, fontsize=12)
+        ax.set_xlabel('Iteration', fontsize=16)
+        ax.set_ylabel('Reward', fontsize=16)
+        ax.legend(frameon=False, fontsize=16, loc='lower right')
         #ax.spines['right'].set_visible(False)
         #ax.spines['top'].set_visible(False)
         names = ['train6.png', 'train12.png', 'train18.png', 'train24.png']
         for name in names: 
-            fig.savefig(name, dpi=1100)
-            plt.show()
+            file_name = f'figures/train_{i + 1}'
+            fig.savefig(f'{file_name}.png', dpi=1100)
+            fig.savefig(f'{file_name}.pdf', dpi=1100)
 
 
 file_paths_list = [file_paths6, file_paths12, file_paths18, file_paths24]
 
 plots(file_paths_list)
 
-
+file_paths_list1 = [file_paths6, file_paths12, file_paths181, file_paths241]
 def error_bars_method(file_paths_list, number_agents_list):
     colors = ['tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple', 'tab:brown']
     markers = ['o', 's', 'D', '^']
-    labels = ['IPPO', 'MAPPO', 'G-MAPPO', 'GP-MAPPO', 'Noise GP-MAPPO']
+    labels = ['IPPO', 'MAPPO', 'G-MAPPO', 'P-GCN-MAPPO', 'Noisy P-GCN-MAPPO']
     fig, ax = plt.subplots(figsize=(18, 8))
     
     for i, (file_paths, num_agents, color, marker) in enumerate(zip(file_paths_list, number_agents_list, colors, markers)):
@@ -142,18 +188,17 @@ def error_bars_method(file_paths_list, number_agents_list):
         ax.errorbar(labels, mean_training_times, yerr=stds_training_times, fmt=marker, color=color, capsize=5, label=f'{num_agents} Agents')
 
     ax.legend(frameon=False, fontsize=14)
-    ax.set_ylabel('Mean Training Time', fontsize=14)
+    ax.set_ylabel('Mean Training Time Per Iteration (s)', fontsize=14)
     ax.set_xlabel('Methods', fontsize=14)
     #ax.spines['right'].set_visible(False)
     #ax.spines['top'].set_visible(False)
     plt.tight_layout()
-    #fig.savefig('error_bars_compile.png', dpi=1100)
+    fig.savefig('figures/error_bars_compile.png', dpi=1100)  # Save as PNG
+    fig.savefig('figures/error_bars_compile.pdf', bbox_inches='tight')  # Save as PDF with tight bounding box
     plt.show()
 
 number_agents_list = [6, 12, 18, 24]
 
-# Execute the error bars method with the provided file paths
-#error_bars_method(file_paths_list, number_agents_list)
 
 def error_bars_method1(file_paths_list):
     colors = ['tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple', 'tab:brown']

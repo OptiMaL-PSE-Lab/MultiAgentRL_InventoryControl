@@ -4,6 +4,9 @@ from pyproj import transform
 
 plt.rcParams['text.usetex'] = True
 
+"""
+Code which makes the plots of the networks of the supply chain.
+"""
 # Define the supply chain configurations
 supply_chain_6 = {
     0: [1, 2], 1: [3, 4], 2: [4, 5], 3: [], 4: [], 5: []
@@ -19,7 +22,7 @@ supply_chain_18 = {
     13: [17], 14: [17], 15: [], 16: [], 17: []
 }
 
-supply_chain_32 = {
+supply_chain_24 = {
     0: [1, 2], 1: [3, 4], 2: [5, 6], 3: [7, 8], 4: [9], 5: [10], 6: [],
     7: [11, 12, 13], 8: [12], 9: [14], 10: [15], 11: [16, 17], 12: [], 
     13: [17], 14: [17, 18], 15: [19], 16: [20], 17: [20, 21], 18: [22], 
@@ -42,7 +45,7 @@ fig, axes = plt.subplots(2, 2, figsize=(8, 6), layout = 'constrained')
 draw_supply_chain_by_echelons(axes[0, 0], supply_chain_6, "a) 6 Nodes")
 draw_supply_chain_by_echelons(axes[0, 1], supply_chain_12, "b) 12 Nodes")
 draw_supply_chain_by_echelons(axes[1, 0], supply_chain_18, "c) 18 Nodes")
-draw_supply_chain_by_echelons(axes[1, 1], supply_chain_32, "d) 24 Nodes")
+draw_supply_chain_by_echelons(axes[1, 1], supply_chain_24, "d) 24 Nodes")
 
 #plt.subplots_adjust(hspace=0.5, wspace=0.5)
 plt.tight_layout()

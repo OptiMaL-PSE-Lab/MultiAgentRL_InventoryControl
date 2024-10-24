@@ -10,7 +10,7 @@ import torch
 from ray.rllib.env.wrappers.multi_agent_env_compatibility import MultiAgentEnvCompatibility
 from scipy.stats import poisson, randint
 """
-This environment is for a multi product, multi echelon supply chain 
+This environment is for a multi echelon supply chain 
 action space is (2,) defined as s and S parameters 
 """
 
@@ -59,8 +59,13 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
         self.num_periods = config.get("num_periods", 50)
 
         # Structure
-        self.num_nodes = config.get("num_nodes", 6)
-        self.connections = config.get("connections", {0: [1,2], 1:[3,4], 2:[4, 5], 3:[], 4:[], 5:[]})
+        self.num_nodes = config.get("num_nodes", 18)
+        self.connections = config.get("connections",   {
+    0: [1, 2], 1: [3, 4], 2: [5, 6], 3: [7, 8], 4: [9], 5: [10], 6: [],
+    7: [11, 12, 13], 8: [12], 9: [14], 10: [15], 11: [16, 17], 12: [], 
+    13: [17], 14: [17], 15: [], 16: [], 17: []
+})
+
         self.network = create_network(self.connections)
         self.order_network = np.transpose(self.network)
         self.retailers = get_retailers(self.network)
@@ -740,3 +745,29 @@ class MultiAgentInvManagementDiv(MultiAgentEnv):
         val = (((val_scaled - a) * (max_val - min_val)) / (b - a)) + min_val
 
         return val
+
+def test():
+    config = {}
+    env = MultiAgentInvManagementDiv(config)
+    env.reset()
+    done = False 
+    print("costs", env.node_cost)
+    print("prices", env.node_price)
+    print("max inv", env.inv_max)
+    print("max order", env.order_max)
+    print("inv init", env.inv_init)
+    print("inv target", env.inv_target)
+    print("stock cost", env.stock_cost)
+    print("backlog cost", env.backlog_cost)
+    print("demand", env.customer_demand)
+    
+
+    for _ in range(1):
+        action_dict = {}
+        for agent in env.node_names:
+            action_dict[agent] = env.action_space.sample()
+        state, rewards, done, truncated, infos = env.step(action_dict)
+        if done:
+            print("done")
+            break
+test()

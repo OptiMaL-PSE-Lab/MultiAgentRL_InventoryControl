@@ -18,7 +18,7 @@ g2_disrupt =r"g23_18.json"
 
 
 file_paths18 = [ippo18, mappo18, gmappo18, g218, g218noise]
-
+#file_paths18 = [ippo18, mappo18, g218noise]
 
 ippo12 = r"ippo_12_1.json"
 mappo12 = r"mappo_12_1.json"
@@ -41,13 +41,13 @@ g232 =  r"g2_32_noise0.json"
 g232noise =  r"g2_32_noise2.json"
 file_paths32 = [ippo32, mappo32, gmappo32, g232, g232noise]
 
-g2_noise00 = r"C:\Users\nk3118\Documents\sS\g2_18_nonoise.json"
-g2_noise01 = r"C:\Users\nk3118\Documents\sS\g2_18_noise0.11.json"
-g2_noise02 = r"C:\Users\nk3118\Documents\sS\g2_18_noise0.222.json"
-g2_noise05 =r"C:\Users\nk3118\Documents\sS\g2_18_noise0.55.json"
-g2_noise075 = r"C:\Users\nk3118\Documents\sS\g2_18_noise075.json"
-g2_noise10 = r"C:\Users\nk3118\Documents\sS\g2_18_noise1.00.json"
-g2_noise20 = r"C:\Users\nk3118\Documents\sS\g2_18_noise20.json"
+g2_noise00 = r"g2_18_nonoise.json"
+g2_noise01 = r"g2_18_noise0.11.json"
+g2_noise02 = r"g2_18_noise0.222.json"
+g2_noise05 =r"g2_18_noise0.55.json"
+g2_noise075 = r"g2_18_noise075.json"
+g2_noise10 = r"g2_18_noise1.00.json"
+g2_noise20 = r"g2_18_noise20.json"
 
 files_noise = [g2_noise00, g2_noise01, g2_noise02, g2_noise05, g2_noise10, g2_noise20]
 
@@ -61,7 +61,7 @@ file_paths6 = [ippo6, mapppo6, gmappo6, g2_6, g2_6noise]
 
 def process_all_nodes_data(profits_dict, ax):
     colors = ['tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple', 'tab:brown']
-    labels = ['IPPO', 'MAPPO', 'G-MAPPO', 'GP-MAPPO', 'Noise GP-MAPPO', 'N/A']
+    labels = ['IPPO', 'MAPPO', 'G-MAPPO', 'P-GCN-MAPPO', 'Noisy P-GCN-MAPPO', '2.0']
     
     for i, (key, av_profits) in enumerate(profits_dict.items()):
         average_profit_list = np.mean(av_profits, axis=0)
@@ -116,11 +116,12 @@ def create_single_plot_for_file_paths(file_paths, label):
     profits_dict = process_all_nodes_data_from_file(file_paths)
     process_all_nodes_data(profits_dict, ax)
 
-    fig.savefig(label, dpi=1100)
+    fig.savefig(label, dpi=1000)
     plt.show()
 
 file_paths_list = [file_paths6, file_paths12, file_paths18, file_paths24]
-labels = ['execute6.png', 'execute12.png', 'execute18.png', 'execute24.png']
+labels = ['figures/execute_6.png', 'figures/execute_12.png', 'figures/execute_18.png', 'figures/execute_24.png']
+labels = ['figures/execute_6.pdf', 'figures/execute_12.pdf', 'figures/execute_18.pdf', 'figures/execute_24.pdf']
 
 for file, label in zip(file_paths_list, labels):
     create_single_plot_for_file_paths(file, label)
